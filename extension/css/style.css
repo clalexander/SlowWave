@@ -322,6 +322,15 @@ q:before, #mindfulBrowsingConfirm q:after {
     border: 0px;
     transition: color 0.4 ease;
 }
+#mindfulBrowsingPopup label {
+    font-weight: 300;
+    display: inline-block;
+    width: 38px;
+    text-align: left;
+    padding-right: 6px;
+    color: #777;
+    transition: color 0.4 ease;
+}
 #mindfulBrowsingPopup .response:hover input, #mindfulBrowsingPopup input:focus {
     /*background: #EEE;*/
     font-weight: 300;
@@ -330,17 +339,16 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingPopup .responses.inspirations input { 
     width: 445px;
 }
+#mindfulBrowsingPopup .responses.settings label {
+	width: 50px;
+}
+#mindfulBrowsingPopup .responses.settings input {
+	width: 50px;
+	margin: 0 5px 0 5px;
+	text-align: center;
+}
 #mindfulBrowsingPopup input::-webkit-input-placeholder{ 
     color: rgba(45, 45, 45, 1);
-}
-#mindfulBrowsingPopup label {
-    font-weight: 300;
-    display: inline-block;
-    width: 38px;
-    text-align: right;
-    padding-right: 6px;
-    color: #777;
-    transition: color 0.4 ease;
 }
 @media (max-width: 650px) and (max-height: 450px) {
     #mindfulBrowsingConfirm {

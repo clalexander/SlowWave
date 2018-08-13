@@ -12,9 +12,10 @@
     var timeouts;
     var currentPhoto;
     var base64;
-	var delay = 10;
+	var waitTimeSeconds;
+	var browseTimeMinutes;
 	var currentDelay = 0;
-	var delayInterval;
+	var waitIntervalId;
 
     // Storage:
     // {
@@ -36,6 +37,8 @@
     chrome.storage.sync.get(null, function(settings) {
       websites = settings.websites || {};
       inspirations = settings.inspirations || {};
+	  waitTimeSeconds = settings.waitTimeSeconds || 30;
+	  browseTimeMinutes = settings.browseTimeMinutes || 10;
       timeouts = settings.timeouts || {};
       currentPhoto = settings.currentPhoto || {};
       initialized = true;
@@ -64,7 +67,7 @@
         ele.parentNode.removeChild(ele);
         var now = new Date();
         // Set for 10 minutes from now.
-        var timeout_diff = (1*60000);
+        var timeout_diff = (browseTimeMinutes*60000);
         timeouts[site_name] = now.getTime() + timeout_diff;
         mindfulBrowsing.saveSettings();
         was_in_timeout = true;
@@ -119,9 +122,9 @@
             "<h2>"+inspiration+"</h2>",
         "</div>",
 		"<div class='mindfulBrowsingBody'>",
-			"<div class='timer' id='mindfulBrowsingDelayTimer'></div>",
+			"<div class='timer' id='mindfulBrowsingWaitTimer'></div>",
 			"<div class='options hidden' id='mindfulBrowsingOptions'>",
-				"<a class='mindfulBtn' id='mindfulBrowsingContinue' href='#'>Yes, 10 minutes.</a>",
+				"<a class='mindfulBtn' id='mindfulBrowsingContinue' href='#'>Yes, "+browseTimeMinutes+" minute"+( browseTimeMinutes > 1 ? "s" : "" )+".</a>",
 				"<a class='mindfulBtn' id='mindfulBrowsingLeave' href='javascript:window.open(location,\"_self\");window.close();'>Actually, nah.</a>",
 			"</div>",
 		"</div>",
@@ -147,22 +150,22 @@
         btn = document.getElementById("mindfulBrowsingContinue");
         btn.onclick = mindfulBrowsing.confirmClicked;
 		
-		currentDelay = delay;		
-		document.getElementById("mindfulBrowsingDelayTimer").classList.remove("hidden");
+		currentDelay = waitTimeSeconds;		
+		document.getElementById("mindfulBrowsingWaitTimer").classList.remove("hidden");
 		document.getElementById("mindfulBrowsingOptions").classList.add("hidden");
-		mindfulBrowsing.updateDelay();
+		mindfulBrowsing.updateWaitTimerDisplay();
 		setTimeout(function() {		
-			clearInterval(delayInterval);
-			delayInterval = setInterval(mindfulBrowsing.updateDelay, 1000);
+			clearInterval(waitIntervalId);
+			waitIntervalId = setInterval(mindfulBrowsing.updateWaitTimerDisplay, 1000);
 		}, 250);
     };
-	mindfulBrowsing.updateDelay = function() {
+	mindfulBrowsing.updateWaitTimerDisplay = function() {
 		if(currentDelay > 0) {
-			document.getElementById("mindfulBrowsingDelayTimer").innerHTML = currentDelay;
+			document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
 			currentDelay -= 1;
 		} else {
-			clearInterval(delayInterval);
-			document.getElementById("mindfulBrowsingDelayTimer").classList.add("hidden");
+			clearInterval(waitIntervalId);
+			document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
 			document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
 		}
 	};
