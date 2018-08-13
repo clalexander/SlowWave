@@ -95,7 +95,7 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingConfirm h1, #mindfulBrowsingConfirm h2 {
     color: rgba(255, 255, 255, 0.9);
     font-weight: 200;
-    font-size: 40px;
+    font-size: 32px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
     -webkit-margin-before: 0.67em;
     -webkit-margin-after: 0.67em;
@@ -103,10 +103,10 @@ q:before, #mindfulBrowsingConfirm q:after {
     -webkit-margin-end: 0px;
 }
 #mindfulBrowsingConfirm h1 {
-    margin-bottom: 40px;
+    margin-bottom: 60px;
 }
 #mindfulBrowsingConfirm h2 {
-    font-size: 20px;
+    font-size: 24px;
 }
 #mindfulBrowsingConfirm .mindfulBrowsingHeading {
     /*background: rgba(255, 255, 255, 0.1);*/
@@ -293,7 +293,7 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingPopup .responses {
     padding: 0 0 40px 20px;
 }
-#mindfulBrowsingPopup .responses.thingsToDo {
+#mindfulBrowsingPopup .responses.inspirations {
     /*padding-left: 20px;*/
 }
 #mindfulBrowsingPopup input {
@@ -315,7 +315,7 @@ q:before, #mindfulBrowsingConfirm q:after {
     font-weight: 300;
     color: #454545;
 }
-#mindfulBrowsingPopup .responses.thingsToDo input { 
+#mindfulBrowsingPopup .responses.inspirations input { 
     width: 445px;
 }
 #mindfulBrowsingPopup input::-webkit-input-placeholder{ 

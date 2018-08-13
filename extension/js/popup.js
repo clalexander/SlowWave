@@ -8,7 +8,7 @@
         { "url": "twitter.com" },
         { "url": ""}
     ];
-    var thingsToDo = [
+    var inspirations = [
         { "title": "take five deep breaths" },
         { "title": "take a quick walk" },
         { "title": ""}
@@ -27,15 +27,15 @@
                     saveWebsites.push(websites[w]);
                 }
             }
-            var saveThingsToDo = [];
-            for (var t in thingsToDo) {
-                if (thingsToDo[t] && thingsToDo[t].title !== "") {
-                    saveThingsToDo.push(thingsToDo[t]);
+            var saveInspirations = [];
+            for (var t in inspirations) {
+                if (inspirations[t] && inspirations[t].title !== "") {
+                    saveInspirations.push(inspirations[t]);
                 }
             }
             chrome.storage.sync.set({
                 "websites": saveWebsites,
-                "thingsToDo": saveThingsToDo,
+                "inspirations": saveInspirations,
                 "timeouts": timeouts,
                 "currentPhoto": currentPhoto
             }, function() {
@@ -50,8 +50,8 @@
           if (settings.websites) {
             websites = settings.websites;  
           }
-          if (settings.thingsToDo) {
-            thingsToDo = settings.thingsToDo;
+          if (settings.inspirations) {
+            inspirations = settings.inspirations;
           }
           if (settings.timeouts) {
             timeouts = settings.timeouts;
@@ -74,18 +74,18 @@
             '      {{/websites}}'+
             '      <div class="response addBtnRow"><a on-click="addSite" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
             '  </div>'+
-            '  <h2>Usually, I\'d rather:</h2>'+
-            '  <div class="responses thingsToDo">'+
-            '      {{#thingsToDo:num}}'+
-            '      <div class="response"><input type="text" placeholder="something small and specific" value="{{title}}" /><a class="removeX" on-click="removeThing">&#x2716; <span class="label">Remove</span></a></div>'+
-            '      {{/thingsToDo}}'+
-            '      <div class="response addBtnRow"><a on-click="addThing" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
+            '  <h2>Inspirations:</h2>'+
+            '  <div class="responses inspirations">'+
+            '      {{#inspirations:num}}'+
+            '      <div class="response"><input type="text" placeholder="what inspires you" value="{{title}}" /><a class="removeX" on-click="removeInspiration">&#x2716; <span class="label">Remove</span></a></div>'+
+            '      {{/inspirations}}'+
+            '      <div class="response addBtnRow"><a on-click="addInspiration" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
             '  </div>'+
             '',
             data: {
             name: 'world',
             websites: websites,
-            thingsToDo: thingsToDo
+            inspirations: inspirations
             }
         });
         ractive.on({
@@ -93,16 +93,16 @@
                 websites.push(BLANK_WEBSITE);
                 return false;
             },
-            addThing: function() {
-                thingsToDo.push(BLANK_THING);
+            addInspiration: function() {
+                inspirations.push(BLANK_THING);
                 return false;
             },
             removeSite: function(event) {
                 websites.splice(event.index.num, 1);
                 return false;
             },
-            removeThing: function(event) {
-                thingsToDo.splice(event.index.num, 1);
+            removeInspiration: function(event) {
+                inspirations.splice(event.index.num, 1);
                 return false;
             }
         });
@@ -110,8 +110,8 @@
             websites = newValue;
             saveSettings();
         }, false);
-        ractive.observe('thingsToDo', function ( newValue, oldValue, keypath ) {
-            thingsToDo = newValue;
+        ractive.observe('inspirations', function ( newValue, oldValue, keypath ) {
+            inspirations = newValue;
             saveSettings();
         }, false);
     }

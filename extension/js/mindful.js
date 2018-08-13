@@ -1,11 +1,11 @@
 (function() {
     var websites = [];
-    var thingsToDo = [];
+    var inspirations = [];
 
     var match = false;
     var href = window.location.href;
     var site_name = null;
-    var rather = null;
+    var inspiration = null;
     var was_in_timeout = false;
     var syncFinished = false;
     var localFinished = false;
@@ -16,7 +16,7 @@
     // Storage:
     // {
     //     "websites": ["foo.com", "bar.com"],
-    //     "thingsToDo": ["go for a walk", "etc"],
+    //     "inspirations": ["go for a walk", "etc"],
     //     "timeouts": {
     //         "foo.com": 1234532341231  // ms since epoch when timeout expires
     //     },
@@ -32,7 +32,7 @@
 
     chrome.storage.sync.get(null, function(settings) {
       websites = settings.websites || {};
-      thingsToDo = settings.thingsToDo || {};
+      inspirations = settings.inspirations || {};
       timeouts = settings.timeouts || {};
       currentPhoto = settings.currentPhoto || {};
       initialized = true;
@@ -77,15 +77,15 @@
                     saveWebsites.push(websites[w]);
                 }
             }
-            var saveThingsToDo = [];
-            for (var t in thingsToDo) {
-                if (thingsToDo[t] && thingsToDo[t].title != "") {
-                    saveThingsToDo.push(thingsToDo[t]);
+            var saveInspirations = [];
+            for (var t in inspirations) {
+                if (inspirations[t] && inspirations[t].title != "") {
+                    saveInspirations.push(inspirations[t]);
                 }
             }
             chrome.storage.sync.set({
                 "websites": saveWebsites,
-                "thingsToDo": saveThingsToDo,
+                "inspirations": saveInspirations,
                 "timeouts": timeouts,
                 "currentPhoto": currentPhoto,
             }, function() {
@@ -100,7 +100,7 @@
         }
     };
     mindfulBrowsing.addOverlay = function() {
-        rather = thingsToDo[Math.floor(Math.random() * thingsToDo.length)].title;
+        inspiration = inspirations[Math.floor(Math.random() * inspirations.length)].title;
         var body = document.body;
         var html = document.documentElement;
         // console.log(currentPhoto)
@@ -113,7 +113,7 @@
         ele.innerHTML = [
         "<div class='mindfulBrowsingHeading'>",
             "<h1>Do you want to " + go_verb + " " +site_name+"?</h1>",
-            "<h2>You said you'd usually rather "+rather+". :)</h2>",
+            "<h2>"+inspiration+"</h2>",
         "</div>",
         "<div class='options'>",
             "<a class='mindfulBtn' id='mindfulBrowsingContinue' href='#'>Yes, 10 minutes.</a>",
