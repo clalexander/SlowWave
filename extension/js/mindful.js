@@ -12,6 +12,9 @@
     var timeouts;
     var currentPhoto;
     var base64;
+	var delay = 10;
+	var currentDelay = 0;
+	var delayInterval;
 
     // Storage:
     // {
@@ -61,7 +64,7 @@
         ele.parentNode.removeChild(ele);
         var now = new Date();
         // Set for 10 minutes from now.
-        var timeout_diff = (10*60000);
+        var timeout_diff = (1*60000);
         timeouts[site_name] = now.getTime() + timeout_diff;
         mindfulBrowsing.saveSettings();
         was_in_timeout = true;
@@ -115,10 +118,13 @@
             "<h1>Do you want to " + go_verb + " " +site_name+"?</h1>",
             "<h2>"+inspiration+"</h2>",
         "</div>",
-        "<div class='options'>",
-            "<a class='mindfulBtn' id='mindfulBrowsingContinue' href='#'>Yes, 10 minutes.</a>",
-            "<a class='mindfulBtn' id='mindfulBrowsingLeave' href='javascript:window.open(location,\"_self\");window.close();'>Actually, nah.</a>",
-        "</div>",
+		"<div class='mindfulBrowsingBody'>",
+			"<div class='timer' id='mindfulBrowsingDelayTimer'></div>",
+			"<div class='options hidden' id='mindfulBrowsingOptions'>",
+				"<a class='mindfulBtn' id='mindfulBrowsingContinue' href='#'>Yes, 10 minutes.</a>",
+				"<a class='mindfulBtn' id='mindfulBrowsingLeave' href='javascript:window.open(location,\"_self\");window.close();'>Actually, nah.</a>",
+			"</div>",
+		"</div>",
         "<a href='" + currentPhoto["credit_url"] + "' id='mindfulBrowsingPhotoCredit'>Photo by " + currentPhoto["credit"] + "</a>"
         ].join("");
         ele.style.height = "100%";
@@ -140,7 +146,26 @@
         
         btn = document.getElementById("mindfulBrowsingContinue");
         btn.onclick = mindfulBrowsing.confirmClicked;
+		
+		currentDelay = delay;		
+		document.getElementById("mindfulBrowsingDelayTimer").classList.remove("hidden");
+		document.getElementById("mindfulBrowsingOptions").classList.add("hidden");
+		mindfulBrowsing.updateDelay();
+		setTimeout(function() {		
+			clearInterval(delayInterval);
+			delayInterval = setInterval(mindfulBrowsing.updateDelay, 1000);
+		}, 250);
     };
+	mindfulBrowsing.updateDelay = function() {
+		if(currentDelay > 0) {
+			document.getElementById("mindfulBrowsingDelayTimer").innerHTML = currentDelay;
+			currentDelay -= 1;
+		} else {
+			clearInterval(delayInterval);
+			document.getElementById("mindfulBrowsingDelayTimer").classList.add("hidden");
+			document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
+		}
+	};
     window.mindfulBrowsing = mindfulBrowsing;
     function init() {
         var now = new Date();
