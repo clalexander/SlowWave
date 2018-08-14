@@ -106,6 +106,9 @@
 	mindfulBrowsing.isActive = function() {
 		var now = new Date();
 		
+		if ( !schedule.active )
+			return true;
+		
 		with (schedule.details) {
 			if ( !schedule.details.weekdays[now.getDay()].active )
 				return false
@@ -205,7 +208,7 @@
 		setTimeout(function() {
 			ele.parentNode.removeChild(ele);
 		}, 400);
-	}
+	};	
     window.mindfulBrowsing = mindfulBrowsing;
     function init() {
         var now = new Date();
