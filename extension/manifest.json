@@ -12,6 +12,10 @@
     "https://*/",
     "unlimitedStorage"
   ],
+  "background": {
+    "scripts": ["js/background.js"],
+	"persistent": false
+  },
   "content_scripts": [
     {
       "matches": [

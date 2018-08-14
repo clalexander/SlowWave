@@ -179,23 +179,8 @@
 		currentDelay = waitTimeSeconds;		
 		document.getElementById("mindfulBrowsingWaitTimer").classList.remove("hidden");
 		document.getElementById("mindfulBrowsingOptions").classList.add("hidden");
-		updateWaitTimerDisplay();
-		setTimeout(function() {		
-			clearInterval(waitIntervalId);
-			waitIntervalId = setInterval(updateWaitTimerDisplay, 1000);
-		}, 500);
-		
-		
-		function updateWaitTimerDisplay() {
-			if(currentDelay > 0) {
-				document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
-				currentDelay -= 1;
-			} else {
-				clearInterval(waitIntervalId);
-				document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
-				document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
-			}
-		}
+		mindfulBrowsing.updateWaitTimerDisplay();
+		setTimeout(mindfulBrowsing.resumeWaitTimer, 500);
     };
 	mindfulBrowsing.addOverlayIfActive = function() {
 		if ( mindfulBrowsing.isActive() ) {
@@ -208,7 +193,29 @@
 		setTimeout(function() {
 			ele.parentNode.removeChild(ele);
 		}, 400);
-	};	
+	};
+	mindfulBrowsing.updateWaitTimerDisplay = function() {
+		if(currentDelay > 0) {
+			document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
+		} 
+	};
+	mindfulBrowsing.updateWaitTimer = function() {
+		currentDelay -= 1;
+		mindfulBrowsing.updateWaitTimerDisplay();
+		if(currentDelay <= 0) {
+			mindfulBrowsing.suspendWaitTimer();
+			document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
+			document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
+		}
+	};
+	mindfulBrowsing.resumeWaitTimer = function() {
+		mindfulBrowsing.suspendWaitTimer();
+		waitIntervalId = setInterval(mindfulBrowsing.updateWaitTimer, 1000);
+	};
+	mindfulBrowsing.suspendWaitTimer = function() {
+		clearInterval(waitIntervalId);
+		waitIntervalId = null;
+	};
     window.mindfulBrowsing = mindfulBrowsing;
     function init() {
         var now = new Date();
