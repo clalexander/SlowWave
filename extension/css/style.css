@@ -78,6 +78,11 @@ q:before, #mindfulBrowsingConfirm q:after {
     background-color: rgba(97, 144, 187, 0.92);
 
     text-align: center;
+	opacity: 1.0;
+	transition: opacity 0.4s ease;
+}
+#mindfulBrowsingConfirm.hidden {
+	opacity: 0.0;
 }
 #mindfulBrowsingConfirm div {
     display: block;
@@ -294,6 +299,9 @@ q:before, #mindfulBrowsingConfirm q:after {
 }
 #mindfulBrowsingPopup a.removeX:hover .label {
     opacity: 1;
+}
+#mindfulBrowsingPopup .response {
+	margin: 0 0 2px 0;
 }
 #mindfulBrowsingPopup .response:hover a.removeX {
     color: #CCC;

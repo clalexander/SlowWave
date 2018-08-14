@@ -64,7 +64,10 @@
     var mindfulBrowsing = window.mindfulBrowsing || {};
     mindfulBrowsing.confirmClicked = function() {
         var ele = document.getElementById("mindfulBrowsingConfirm");
-        ele.parentNode.removeChild(ele);
+		ele.classList.add("hidden");
+		setTimeout(function() {
+			ele.parentNode.removeChild(ele);
+		}, 400);
         var now = new Date();
         // Set for 10 minutes from now.
         var timeout_diff = (browseTimeMinutes*60000);
@@ -115,6 +118,7 @@
         var go_verb = (was_in_timeout)? "stay on" : "spend time on";
 
         var ele = document.createElement("div");
+		ele.classList.add("hidden");
         ele.id="mindfulBrowsingConfirm";
         ele.innerHTML = [
         "<div class='mindfulBrowsingHeading'>",
@@ -146,6 +150,9 @@
         ele.style.backgroundPosition = "center center";
         ele.style.backgroundRepeat = "no-repeat";
         document.body.appendChild(ele);
+		setTimeout(function() {
+			ele.classList.remove("hidden");
+		}, 0);
         
         btn = document.getElementById("mindfulBrowsingContinue");
         btn.onclick = mindfulBrowsing.confirmClicked;
@@ -153,22 +160,24 @@
 		currentDelay = waitTimeSeconds;		
 		document.getElementById("mindfulBrowsingWaitTimer").classList.remove("hidden");
 		document.getElementById("mindfulBrowsingOptions").classList.add("hidden");
-		mindfulBrowsing.updateWaitTimerDisplay();
+		updateWaitTimerDisplay();
 		setTimeout(function() {		
 			clearInterval(waitIntervalId);
-			waitIntervalId = setInterval(mindfulBrowsing.updateWaitTimerDisplay, 1000);
-		}, 250);
-    };
-	mindfulBrowsing.updateWaitTimerDisplay = function() {
-		if(currentDelay > 0) {
-			document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
-			currentDelay -= 1;
-		} else {
-			clearInterval(waitIntervalId);
-			document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
-			document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
+			waitIntervalId = setInterval(updateWaitTimerDisplay, 1000);
+		}, 500);
+		
+		
+		function updateWaitTimerDisplay() {
+			if(currentDelay > 0) {
+				document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
+				currentDelay -= 1;
+			} else {
+				clearInterval(waitIntervalId);
+				document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
+				document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
+			}
 		}
-	};
+    };
     window.mindfulBrowsing = mindfulBrowsing;
     function init() {
         var now = new Date();

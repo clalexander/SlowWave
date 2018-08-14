@@ -2,6 +2,10 @@ TODO
 
 1) Add forced delay
 
-1) Set up configurable
+2) Set up configurable
 	a) delay time
 	b) browsing time
+
+3) Add configurable active times
+
+4) Add configurable browsing limits
