@@ -15,6 +15,25 @@
     ];
 	var waitTimeSeconds = 30;
 	var browseTimeMinutes = 10;
+	var schedule = {
+		active: true,
+		hidden: "",
+		details: {
+			times: {
+				start: "09:00",
+				end: "17:00"
+			},
+			weekdays: [
+				{ day: "Sun", active: false },
+				{ day: "Mon", active: true },
+				{ day: "Tue", active: true },
+				{ day: "Wed", active: true },
+				{ day: "Thu", active: true },
+				{ day: "Fri", active: true },
+				{ day: "Sat", active: false },
+			]
+		}
+	};
     var timeouts = {};
     var currentPhoto;
 
@@ -40,6 +59,7 @@
                 "inspirations": saveInspirations,
 				"waitTimeSeconds": waitTimeSeconds,
 				"browseTimeMinutes": browseTimeMinutes,
+				"schedule": schedule,
                 "timeouts": timeouts,
                 "currentPhoto": currentPhoto
             }, function() {
@@ -63,6 +83,9 @@
 		  if (settings.browseTimeMinutes) {
 			browseTimeMinutes = settings.browseTimeMinutes;
 		  }
+		  if(settings.schedule) {
+			  schedule = settings.schedule;
+		  }
           if (settings.timeouts) {
             timeouts = settings.timeouts;
           }
@@ -74,35 +97,50 @@
     };
     var init = function() {
         var ractive = new Ractive({
-            // The `el` option can be a node, an ID, or a CSS selector.
-            el: 'container',
-            template:
-            '<h2>I want to be mindful of spending my time on:</h2>'+
-            '<div class="responses">'+
-            '   {{#websites:num}}'+
-            '   <div class="response"><label>http://</label><input type="text" value="{{url}}" /><a class="removeX" on-click="removeSite">&#x2716; <span class="label">Remove</span></a></div>'+
-            '   {{/websites}}'+
-            '   <div class="response addBtnRow"><a on-click="addSite" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
-            '</div>'+
-            '<h2>Inspirations:</h2>'+
-            '<div class="responses inspirations">'+
-            '   {{#inspirations:num}}'+
-            '   <div class="response"><input type="text" placeholder="what inspires you" value="{{title}}" /><a class="removeX" on-click="removeInspiration">&#x2716; <span class="label">Remove</span></a></div>'+
-            '   {{/inspirations}}'+
-            '   <div class="response addBtnRow"><a on-click="addInspiration" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
-            '</div>'+
-			'<h2>Settings:</h2>'+
-			'<div class="responses settings">'+
-			'	<div class="response"><label>Wait</label><input type="text" value="{{waitTimeSeconds}}" /> <span class="label">seconds</span></div>'+
-			'	<div class="response"><label>Browse</label><input type="text" value="{{browseTimeMinutes}}" /> <span class="label">minutes</span></div>'+
+            el: '#container',
+            template: 
+			'<h2>I want to be mindful of spending my time on:</h2>'+
+			'<div class="responses">'+
+			'	{{#websites:num}}'+
+			'	<div class="response"><label>http://</label><input type="text" value="{{url}}" /><a class="removeX" on-click="removeSite">&#x2716; <span class="label">Remove</span></a></div>'+
+			'	{{/websites}}'+
+			'	<div class="response addBtnRow"><a on-click="addSite" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
 			'</div>'+
-            '',
+			'<h2>Inspirations:</h2>'+
+			'<div class="responses inspirations">'+
+			'	{{#inspirations:num}}'+
+			'	<div class="response"><input type="text" placeholder="what inspires you" value="{{title}}" /><a class="removeX" on-click="removeInspiration">&#x2716; <span class="label">Remove</span></a></div>'+
+			'	{{/inspirations}}'+
+			'	<div class="response addBtnRow"><a on-click="addInspiration" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
+			'</div>'+
+			'<h2>Settings:</h2>'+
+			'<div class="settings">'+
+			'	<div class="setting"><label class="main">Wait</label><input type="text" value="{{waitTimeSeconds}}" /> <span class="label">seconds</span></div>'+
+			'	<div class="setting"><label class="main">Browse</label><input type="text" value="{{browseTimeMinutes}}" /> <span class="label">minutes</span></div>'+
+			'	{{#schedule}}'+
+			'	<div class="setting">'+
+			'		<label class="main">Schedule</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
+			'		<div class="detail schedule {{hidden}}">'+
+			'			{{#details}}'+
+			'			<div class="detailItem">Enabled between <input type="time" value="{{times.start}}" /> and <input type="time" value="{{times.end}}" /></div>'+
+			'			<div class="detailItem">'+
+			'				{{#weekdays}}'+
+			'				<label class="checkbox">{{day}}<input type="checkbox" checked="{{active}}" /><span class="checkmark"></span></label>'+
+			'				{{/weekdays}}'+
+			'			</div>'+
+			'			{{/details}}'+
+			'		</div>'+
+			'	</div>'+
+			'	{{/schedule}}'+
+			'</div>'+
+			'',
             data: {
-            name: 'world',
-            websites: websites,
-            inspirations: inspirations,
-			waitTimeSeconds: waitTimeSeconds,
-			browseTimeMinutes: browseTimeMinutes
+				name: 'world',
+				websites: websites,
+				inspirations: inspirations,
+				waitTimeSeconds: waitTimeSeconds,
+				browseTimeMinutes: browseTimeMinutes,
+				schedule: schedule
             }
         });
         ractive.on({
@@ -142,6 +180,23 @@
 				browseTimeMinutes = Math.floor(newValue);
 			}
             saveSettings();
+		}, false);
+		ractive.observe('schedule.active', function( newValue, oldValue, keypath ) {
+			var newHidden = newValue ? "" : "hidden";
+			ractive.set('schedule.hidden', newHidden);
+			schedule.active = newValue;
+			schedule.hidden = newHidden;
+			saveSettings();
+		}, false);
+		ractive.observe('schedule.details.times', function( newValue, oldValue, keypath ) {
+			if ( newValue.start && newValue.end ) {
+				schedule.details.times = newValue;
+				saveSettings();
+			}
+		}, false);
+		ractive.observe('schedule.details.weekdays', function( newValue, oldValue, keypath ) {
+			schedule.details.weekdays = newValue;
+			saveSettings();
 		}, false);
     }
     loadSettings();

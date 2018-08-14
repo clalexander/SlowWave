@@ -306,15 +306,11 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingPopup .response:hover a.removeX {
     color: #CCC;
 }
-#mindfulBrowsingPopup .response:hover label {
+#mindfulBrowsingPopup .response:hover label, #mindfulBrowsingPopup .setting:hover > label {
     color: #454545;
 }
-
-#mindfulBrowsingPopup .responses {
+#mindfulBrowsingPopup .responses, #mindfulBrowsingPopup .settings {
     padding: 0 0 40px 20px;
-}
-#mindfulBrowsingPopup .responses.inspirations {
-    /*padding-left: 20px;*/
 }
 #mindfulBrowsingPopup input {
     border-radius: 2px;
@@ -339,7 +335,7 @@ q:before, #mindfulBrowsingConfirm q:after {
     color: #777;
     transition: color 0.4 ease;
 }
-#mindfulBrowsingPopup .response:hover input, #mindfulBrowsingPopup input:focus {
+#mindfulBrowsingPopup .response:hover input, #mindfulBrowsingPopup .setting:hover input, #mindfulBrowsingPopup input:focus {
     /*background: #EEE;*/
     font-weight: 300;
     color: #454545;
@@ -347,13 +343,134 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingPopup .responses.inspirations input { 
     width: 445px;
 }
-#mindfulBrowsingPopup .responses.settings label {
-	width: 50px;
+#mindfulBrowsingPopup .setting > label {
+	width: 100px;
+	font-size: 20px;
+	padding-bottom: 6px;
 }
-#mindfulBrowsingPopup .responses.settings input {
+#mindfulBrowsingPopup .settings input {
 	width: 50px;
 	margin: 0 5px 0 5px;
 	text-align: center;
+}
+#mindfulBrowsingPopup .setting {
+	margin: 0 0 8px 0;
+	vertical-align: middle;
+}
+#mindfulBrowsingPopup label.switch {
+	position: relative;
+	top: 3px;
+	left: 13px;
+	display: inline-block;
+	width: 42px;
+	height: 24px;
+	padding: 0;
+	margin-top: 6px;
+}
+#mindfulBrowsingPopup .switch input {
+	display: none;
+}
+#mindfulBrowsingPopup .slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 42px;
+	background-color: #ccc;
+	transition: 0.4s;
+	border-radius: 12px;
+}
+#mindfulBrowsingPopup .slider:before {
+	position: absolute;
+	content: "";
+	height: 18px;
+	width: 18px;
+	left: 3px;
+	bottom: 3px;
+	background-color: white;
+	transition: 0.4s;
+	border-radius: 50%;
+}
+#mindfulBrowsingPopup .switch input:checked + .slider {
+	background-color: #888;
+}
+#mindfulBrowsingPopup .switch input:checked + .slider:before {
+	transform: translateX(18px);
+}
+#mindfulBrowsingPopup .setting input[type="checkbox"] {
+	margin: 14px 0;
+}
+#mindfulBrowsingPopup .setting .detail {
+	padding: 16px 0 8px 20px;
+	display: block;
+	transition: 0.4s ease;
+	opacity: 1.0;
+	font-size: 14px;
+	height: 1px;
+}
+#mindfulBrowsingPopup .setting .detail.schedule {
+	height: 97px;
+}
+#mindfulBrowsingPopup .setting .detail.hidden {
+	height: 0px;
+	padding: 0 0 0 20px;
+	overflow: hidden;
+	opacity: 0.0;
+}
+#mindfulBrowsingPopup .detailItem {
+	margin: 0 0 16px 0;
+}
+#mindfulBrowsingPopup .detailItem input[type="time"] {
+	width: 120px;
+}
+#mindfulBrowsingPopup .detailItem, #mindfulBrowsingPopup .detailItem label {
+	font-size: 16px;
+	color: #aaa;
+}
+#mindfulBrowsingPopup .detailItem label:hover {
+	color: #454545;
+}
+#mindfulBrowsingPopup .detailItem label.checkbox {
+	display: inline-block;
+	position: relative;
+	width: 32px;
+	padding: 0 0 0 24px;
+	margin: 0 6px 0 0;
+	user-select: none;
+	cursor: pointer;
+}
+#mindfulBrowsingPopup .detailItem .checkbox input {
+	display: none;
+}
+#mindfulBrowsingPopup .detailItem .checkmark {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 18px;
+	width: 18px;
+	background-color: #ccc;
+}
+#mindfulBrowsingPopup .detailItem .checkbox:hover input + .checkmark {
+	background-color: #bbb;
+}
+#mindfulBrowsingPopup .detailItem .checkbox input:checked + .checkmark {
+	background-color: #888;
+}
+#mindfulBrowsingPopup .checkmark:after {
+	content: "";
+	position: absolute;
+	display: none;left: 6px;
+	top: 1px;
+	width: 4px;
+	height: 10px;
+	border: solid white;
+	border-width: 0 3px 3px 0;
+	transform: rotate(45deg);
+}
+#mindfulBrowsingPopup .detailItem input:checked + .checkmark:after {
+	display: block;
 }
 #mindfulBrowsingPopup input::-webkit-input-placeholder{ 
     color: rgba(45, 45, 45, 1);

@@ -9,3 +9,7 @@ TODO
 3) Add configurable active times
 
 4) Add configurable browsing limits
+
+5) Hide scrollbars
+
+6) Stop wait countdown when not on page

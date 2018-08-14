@@ -16,6 +16,7 @@
 	var browseTimeMinutes;
 	var currentDelay = 0;
 	var waitIntervalId;
+	var schedule;
 
     // Storage:
     // {
@@ -39,6 +40,7 @@
       inspirations = settings.inspirations || {};
 	  waitTimeSeconds = settings.waitTimeSeconds || 30;
 	  browseTimeMinutes = settings.browseTimeMinutes || 10;
+	  schedule = settings.schedule || {};
       timeouts = settings.timeouts || {};
       currentPhoto = settings.currentPhoto || {};
       initialized = true;
@@ -63,18 +65,13 @@
     };
     var mindfulBrowsing = window.mindfulBrowsing || {};
     mindfulBrowsing.confirmClicked = function() {
-        var ele = document.getElementById("mindfulBrowsingConfirm");
-		ele.classList.add("hidden");
-		setTimeout(function() {
-			ele.parentNode.removeChild(ele);
-		}, 400);
         var now = new Date();
-        // Set for 10 minutes from now.
         var timeout_diff = (browseTimeMinutes*60000);
         timeouts[site_name] = now.getTime() + timeout_diff;
         mindfulBrowsing.saveSettings();
         was_in_timeout = true;
-        setTimeout(mindfulBrowsing.addOverlay, timeout_diff);
+        setTimeout(mindfulBrowsing.addOverlayIfActive, timeout_diff);
+		mindfulBrowsing.removeOverlay();
         return false;
     };
     mindfulBrowsing.saveSettings = function() {
@@ -93,8 +90,6 @@
                 }
             }
             chrome.storage.sync.set({
-                "websites": saveWebsites,
-                "inspirations": saveInspirations,
                 "timeouts": timeouts,
                 "currentPhoto": currentPhoto,
             }, function() {
@@ -108,6 +103,27 @@
             });
         }
     };
+	mindfulBrowsing.isActive = function() {
+		var now = new Date();
+		
+		with (schedule.details) {
+			if ( !schedule.details.weekdays[now.getDay()].active )
+				return false
+			
+			var nowTime = lzero(now.getHours()) + ":" + lzero(now.getMinutes());
+			if ( times.start < times.end ) {
+				return times.start <= nowTime && nowTime < times.end;
+			} else {
+				return times.start <= nowTime || nowTime < times.end;
+			}
+		}
+		
+		function lzero(x) {
+			return x > 9 ? x : "0" + x;
+		}
+		
+		return true;
+	};
     mindfulBrowsing.addOverlay = function() {
         inspiration = inspirations[Math.floor(Math.random() * inspirations.length)].title;
         var body = document.body;
@@ -178,6 +194,18 @@
 			}
 		}
     };
+	mindfulBrowsing.addOverlayIfActive = function() {
+		if ( mindfulBrowsing.isActive() ) {
+			mindfulBrowsing.addOverlay();
+		}
+	};
+	mindfulBrowsing.removeOverlay = function() {
+        var ele = document.getElementById("mindfulBrowsingConfirm");
+		ele.classList.add("hidden");
+		setTimeout(function() {
+			ele.parentNode.removeChild(ele);
+		}, 400);
+	}
     window.mindfulBrowsing = mindfulBrowsing;
     function init() {
         var now = new Date();
@@ -221,29 +249,31 @@
             xmlHTTP.send();
             mindfulBrowsing.saveSettings();
         }
-        for (var i in websites) {
-            if (href.indexOf(websites[i].url) != -1) {
-                site_name = websites[i].url;
+		if ( mindfulBrowsing.isActive() ) {
+			for (var i in websites) {
+				if (href.indexOf(websites[i].url) != -1) {
+					site_name = websites[i].url;
 
-                match = true;
-                // Check timeouts
-                if (site_name in timeouts) {
-                    if (timeouts[site_name] < now.getTime()) {
-                        delete timeouts[site_name];
-                    } else {
-                        match = false;
-                        was_in_timeout = true;
-                        setTimeout(mindfulBrowsing.addOverlay, timeouts[site_name] - now.getTime());
-                    }
-                }
-                if (match) {
-                    
-                    break;
-                }
-            }
-        }
-        if (match) {
-            mindfulBrowsing.addOverlay();
-        }
+					match = true;
+					// Check timeouts
+					if (site_name in timeouts) {
+						if (timeouts[site_name] < now.getTime()) {
+							delete timeouts[site_name];
+						} else {
+							match = false;
+							was_in_timeout = true;
+							setTimeout(mindfulBrowsing.addOverlayIfActive, timeouts[site_name] - now.getTime());
+						}
+					}
+					if (match) {
+						
+						break;
+					}
+				}
+			}
+			if (match) {
+				mindfulBrowsing.addOverlay();
+			}
+		}
     }
 })();
