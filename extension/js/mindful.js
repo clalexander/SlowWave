@@ -132,8 +132,6 @@
         var body = document.body;
         var html = document.documentElement;
         // console.log(currentPhoto)
-        var height = Math.max( body.scrollHeight, body.offsetHeight,
-            html.clientHeight, html.scrollHeight, html.offsetHeight );
         var go_verb = (was_in_timeout)? "stay on" : "spend time on";
 
         var ele = document.createElement("div");
@@ -153,8 +151,6 @@
 		"</div>",
         "<a href='" + currentPhoto["credit_url"] + "' id='mindfulBrowsingPhotoCredit'>Photo by " + currentPhoto["credit"] + "</a>"
         ].join("");
-        ele.style.height = "100%";
-        // ele.style.backgroundColor = "rgba(97, 144, 187, 0.92)";
         ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,0.92) 100%)";
 
         // ele.style.backgroundImage = "url('" + currentPhoto["url"] + "')";
@@ -276,13 +272,18 @@
 						}
 					}
 					if (match) {
-						
 						break;
 					}
 				}
 			}
 			if (match) {
-				mindfulBrowsing.addOverlay();
+				(function delayedAddOverlay() {
+					if(document.body != null) {
+						mindfulBrowsing.addOverlay();
+					} else {
+						setTimeout(delayedAddOverlay, 10);
+					}
+				})()
 			}
 		}
     }

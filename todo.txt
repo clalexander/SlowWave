@@ -13,3 +13,5 @@ TODO
 5) Hide scrollbars
 
 6) Stop wait countdown when not on page
+
+7) Load splash before underlying loads

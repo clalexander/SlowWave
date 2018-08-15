@@ -28,7 +28,8 @@
       "js": [
         "js/mindful.js",
         "js/photoInfo.js"
-      ]
+      ],
+	  "run_at": "document_start"
     }
   ],
 

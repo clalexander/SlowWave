@@ -27,7 +27,6 @@ function changeTabHandler(info) {
 }
 
 function windowFocusChangedHandler(windowId) {
-	console.log("window focus change handler " + windowId);
 	trySuspendLastTab();
 	
 	if (windowId != chrome.windows.WINDOW_ID_NONE) {

@@ -26,6 +26,8 @@ footer, #mindfulBrowsingConfirm header, #mindfulBrowsingConfirm hgroup, #mindful
 }
 #mindfulBrowsingConfirm {
     line-height: 1;
+	height: 100%;
+	width: 100%;
 }
 #mindfulBrowsingConfirm ol, #mindfulBrowsingConfirm ul {
     list-style: none;
