@@ -337,7 +337,7 @@ q:before, #mindfulBrowsingConfirm q:after {
     color: #777;
     transition: color 0.4 ease;
 }
-#mindfulBrowsingPopup .response:hover input, #mindfulBrowsingPopup .setting:hover input, #mindfulBrowsingPopup input:focus {
+#mindfulBrowsingPopup .response:hover input, #mindfulBrowsingPopup .setting:hover > input, #mindfulBrowsingPopup input:focus {
     /*background: #EEE;*/
     font-weight: 300;
     color: #454545;
@@ -415,6 +415,9 @@ q:before, #mindfulBrowsingConfirm q:after {
 #mindfulBrowsingPopup .setting .detail.schedule {
 	height: 97px;
 }
+#mindfulBrowsingPopup .setting .detail.limitation {
+	height: 47px;
+}
 #mindfulBrowsingPopup .setting .detail.hidden {
 	height: 0px;
 	padding: 0 0 0 20px;
@@ -426,6 +429,9 @@ q:before, #mindfulBrowsingConfirm q:after {
 }
 #mindfulBrowsingPopup .detailItem input[type="time"] {
 	width: 120px;
+}
+#mindfulBrowsingPopup .detailItem input:hover, #mindfulBrowsingPopup .detailItem input:focus {
+    color: #454545;
 }
 #mindfulBrowsingPopup .detailItem, #mindfulBrowsingPopup .detailItem label {
 	font-size: 16px;

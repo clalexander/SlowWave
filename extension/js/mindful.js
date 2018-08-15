@@ -1,3 +1,27 @@
+Array.prototype.indexOf = function(value, keypath) {
+	for (var i = 0; i < this.length; i++) {
+    	var ele = this[i];
+        if (keypath)
+          ele = keypath.split('.').reduce((previous, current) => {
+              if (previous && current in previous)
+                  return previous[current];
+              return null;
+          }, ele);
+        if ( ele && ele == value )
+        	return i;
+    }
+    return -1;
+};
+
+function addClassName(ele, className) {
+	if (ele)
+		ele.classList.add(className);
+}
+function removeClassName(ele, className) {
+	if (ele)
+		ele.classList.remove(className);
+}
+
 (function() {
     var websites = [];
     var inspirations = [];
@@ -17,14 +41,20 @@
 	var currentDelay = 0;
 	var waitIntervalId;
 	var schedule;
+	var limitation;
 
     // Storage:
     // {
     //     "websites": ["foo.com", "bar.com"],
     //     "inspirations": ["go for a walk", "etc"],
-    //     "timeouts": {
-    //         "foo.com": 1234532341231  // ms since epoch when timeout expires
-    //     },
+    //     "timeouts": [
+    //         	{
+	//				"url": "foo.com",
+	//				"active": true,
+	//				"exp_time": 1234532341231,  // ms since epoch when timeout expires
+	//				"prev_timeouts": [ 1234532341231, 1234532341231, 1234532341231 ]  // start times of previous timeout periods
+	//			}
+    //     ],
     //     "currentPhoto": {
     //         "next_update": 12312431242,
     //         "credit": "Chris Gin",
@@ -41,6 +71,7 @@
 	  waitTimeSeconds = settings.waitTimeSeconds || 30;
 	  browseTimeMinutes = settings.browseTimeMinutes || 10;
 	  schedule = settings.schedule || {};
+	  limitation = settings.limitation || {};
       timeouts = settings.timeouts || {};
       currentPhoto = settings.currentPhoto || {};
       initialized = true;
@@ -48,8 +79,6 @@
       initIfReady();
     });
     chrome.storage.local.get('mindfulbrowsing', function(settings) {
-        // console.log("local")
-        // console.log(settings.mindfulbrowsing)
         if (settings && settings.mindfulbrowsing && settings.mindfulbrowsing.base64) {
             base64 = settings.mindfulbrowsing.base64 || {};
         } else {
@@ -63,32 +92,11 @@
             init();
         }
     };
+	
     var mindfulBrowsing = window.mindfulBrowsing || {};
-    mindfulBrowsing.confirmClicked = function() {
-        var now = new Date();
-        var timeout_diff = (browseTimeMinutes*60000);
-        timeouts[site_name] = now.getTime() + timeout_diff;
-        mindfulBrowsing.saveSettings();
-        was_in_timeout = true;
-        setTimeout(mindfulBrowsing.addOverlayIfActive, timeout_diff);
-		mindfulBrowsing.removeOverlay();
-        return false;
-    };
     mindfulBrowsing.saveSettings = function() {
         // Save it using the Chrome extension storage API.
         if (initialized === true) {
-            var saveWebsites = [];
-            for (var w in websites) {
-                if (websites[w] && websites[w].url != "") {
-                    saveWebsites.push(websites[w]);
-                }
-            }
-            var saveInspirations = [];
-            for (var t in inspirations) {
-                if (inspirations[t] && inspirations[t].title != "") {
-                    saveInspirations.push(inspirations[t]);
-                }
-            }
             chrome.storage.sync.set({
                 "timeouts": timeouts,
                 "currentPhoto": currentPhoto,
@@ -103,6 +111,25 @@
             });
         }
     };
+	mindfulBrowsing.trimTimeouts = function() {
+		// necessary for new timeout version
+		if( !(timeouts instanceof Array) ) {
+			delete timeouts;
+			timeouts = [];
+			mindfulBrowsing.saveSettings();
+		}
+		
+		var now = new Date();
+		var hour_ago = now.getTime() - 60*60*1000;
+		
+		timeouts = timeouts.filter(function(timeout) {
+			timeout.prev_timeouts = timeout.prev_timeouts.filter(function(prev_timeout) {
+				return prev_timeout >= hour_ago;
+			});
+			return timeout.active || timeout.prev_timeouts.length > 0;
+		});
+		mindfulBrowsing.saveSettings();
+	};
 	mindfulBrowsing.isActive = function() {
 		var now = new Date();
 		
@@ -127,19 +154,40 @@
 		
 		return true;
 	};
+    mindfulBrowsing.confirmClicked = function() {
+        var now = new Date();
+        var timeout_diff = (browseTimeMinutes*60000);
+		var i = timeouts.indexOf(site_name, "url");
+		if( i < 0 ) {
+			timeouts.push({
+				url: site_name,
+				active: false,
+				exp_time: 0,
+				prev_timeouts: []
+			});
+			i = timeouts.length - 1;
+		} 
+		with (timeouts[i]) {
+			active = true;
+			exp_time = now.getTime() + timeout_diff;
+			prev_timeouts.push(now.getTime());
+		}
+        mindfulBrowsing.saveSettings();
+        was_in_timeout = true;
+        setTimeout(mindfulBrowsing.addOverlayIfActive, timeout_diff);
+		mindfulBrowsing.removeOverlay();
+    };
     mindfulBrowsing.addOverlay = function() {
         inspiration = inspirations[Math.floor(Math.random() * inspirations.length)].title;
         var body = document.body;
-        var html = document.documentElement;
         // console.log(currentPhoto)
-        var go_verb = (was_in_timeout)? "stay on" : "spend time on";
 
         var ele = document.createElement("div");
 		ele.classList.add("hidden");
         ele.id="mindfulBrowsingConfirm";
         ele.innerHTML = [
         "<div class='mindfulBrowsingHeading'>",
-            "<h1>Do you want to " + go_verb + " " +site_name+"?</h1>",
+            "<h1 id='mindfulBrowsingMessage'></h1>",
             "<h2>"+inspiration+"</h2>",
         "</div>",
 		"<div class='mindfulBrowsingBody'>",
@@ -166,17 +214,13 @@
         ele.style.backgroundRepeat = "no-repeat";
         document.body.appendChild(ele);
 		setTimeout(function() {
-			ele.classList.remove("hidden");
+			removeClassName(ele, "hidden");
 		}, 0);
         
         btn = document.getElementById("mindfulBrowsingContinue");
         btn.onclick = mindfulBrowsing.confirmClicked;
 		
-		currentDelay = waitTimeSeconds;		
-		document.getElementById("mindfulBrowsingWaitTimer").classList.remove("hidden");
-		document.getElementById("mindfulBrowsingOptions").classList.add("hidden");
-		mindfulBrowsing.updateWaitTimerDisplay();
-		setTimeout(mindfulBrowsing.resumeWaitTimer, 500);
+		mindfulBrowsing.updateOverlay();
     };
 	mindfulBrowsing.addOverlayIfActive = function() {
 		if ( mindfulBrowsing.isActive() ) {
@@ -190,9 +234,30 @@
 			ele.parentNode.removeChild(ele);
 		}, 400);
 	};
+	mindfulBrowsing.updateOverlay = function() {
+		var message;
+        var go_verb = (was_in_timeout)? "stay on" : "spend time on";		
+		var i = timeouts.indexOf(site_name, "url");
+		var limit = limitation.details.limit;
+		var limit_hit = (i >= 0 && limitation.active && timeouts[i].prev_timeouts.length >= limit);
+		
+		if ( limit_hit ) {
+			message = "You have reached your limit of  " + limit + "  view" + (limit > 1 ? "s" : "") + " per hour on  " + site_name;
+		} else {
+			message = "Do you want to " + go_verb + " " +site_name+"?"
+			currentDelay = waitTimeSeconds;		
+			removeClassName(document.getElementById("mindfulBrowsingWaitTimer"), "hidden");
+			addClassName(document.getElementById("mindfulBrowsingOptions"), "hidden");
+			mindfulBrowsing.updateWaitTimerDisplay();
+			setTimeout(mindfulBrowsing.resumeWaitTimer, 500);
+		}
+		document.getElementById("mindfulBrowsingMessage").innerHTML = message;
+	};
 	mindfulBrowsing.updateWaitTimerDisplay = function() {
 		if(currentDelay > 0) {
-			document.getElementById("mindfulBrowsingWaitTimer").innerHTML = currentDelay;
+			var ele = document.getElementById("mindfulBrowsingWaitTimer");
+			if (ele)
+				ele.innerHTML = currentDelay;
 		} 
 	};
 	mindfulBrowsing.updateWaitTimer = function() {
@@ -200,8 +265,8 @@
 		mindfulBrowsing.updateWaitTimerDisplay();
 		if(currentDelay <= 0) {
 			mindfulBrowsing.suspendWaitTimer();
-			document.getElementById("mindfulBrowsingWaitTimer").classList.add("hidden");
-			document.getElementById("mindfulBrowsingOptions").classList.remove("hidden");
+			addClassName(document.getElementById("mindfulBrowsingWaitTimer"), "hidden");
+			removeClassName(document.getElementById("mindfulBrowsingOptions"), "hidden");
 		}
 	};
 	mindfulBrowsing.resumeWaitTimer = function() {
@@ -213,6 +278,7 @@
 		waitIntervalId = null;
 	};
     window.mindfulBrowsing = mindfulBrowsing;
+	
     function init() {
         var now = new Date();
         if (base64 === undefined || currentPhoto["next_update"] === undefined || currentPhoto["next_update"] < now.getTime()) {
@@ -255,20 +321,27 @@
             xmlHTTP.send();
             mindfulBrowsing.saveSettings();
         }
+		
 		if ( mindfulBrowsing.isActive() ) {
 			for (var i in websites) {
 				if (href.indexOf(websites[i].url) != -1) {
 					site_name = websites[i].url;
-
 					match = true;
 					// Check timeouts
-					if (site_name in timeouts) {
-						if (timeouts[site_name] < now.getTime()) {
-							delete timeouts[site_name];
-						} else {
-							match = false;
-							was_in_timeout = true;
-							setTimeout(mindfulBrowsing.addOverlayIfActive, timeouts[site_name] - now.getTime());
+					mindfulBrowsing.trimTimeouts();
+					var j = timeouts.indexOf(site_name, "url");
+					if (j >= 0) {
+						with(timeouts[j]) {
+							if(active) {
+								if(exp_time < now.getTime()) {
+									active = false;
+									mindfulBrowsing.saveSettings();
+								} else {
+									match = false;
+									was_in_timeout = true;
+									setTimeout(mindfulBrowsing.addOverlayIfActive, timeouts[j].exp_time - now.getTime());
+								}
+							}
 						}
 					}
 					if (match) {

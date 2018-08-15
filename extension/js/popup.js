@@ -34,8 +34,13 @@
 			]
 		}
 	};
-    var timeouts = {};
-    var currentPhoto;
+	var limitation = {
+		active: true,
+		hidden: "",
+		details: {
+			limit: 3
+		}
+	};
 
     var initialized = false;
 
@@ -60,8 +65,7 @@
 				"waitTimeSeconds": waitTimeSeconds,
 				"browseTimeMinutes": browseTimeMinutes,
 				"schedule": schedule,
-                "timeouts": timeouts,
-                "currentPhoto": currentPhoto
+				"limitation": limitation
             }, function() {
               // Notify that we saved.
             });
@@ -86,10 +90,9 @@
 		  if(settings.schedule) {
 			  schedule = settings.schedule;
 		  }
-          if (settings.timeouts) {
-            timeouts = settings.timeouts;
-          }
-          currentPhoto = settings.currentPhoto;
+		  if(settings.limitation) {
+			  limitation = settings.limitation;
+		  }
 
           init();
           initialized = true;
@@ -132,6 +135,16 @@
 			'		</div>'+
 			'	</div>'+
 			'	{{/schedule}}'+
+			'	{{#limitation}}'+
+			'	<div class="setting">'+
+			'		<label class="main">Limit</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
+			'		<div class="detail limitation {{hidden}}">'+
+			'			{{#details}}'+
+			'			<div class="detailItem">Maximum <input type="text" value="{{limit}}" /> browsing period(s) per hour</div>'+
+			'			{{/details}}'+
+			'		</div>'+
+			'	</div>'+
+			'	{{/limitation}}'+
 			'</div>'+
 			'',
             data: {
@@ -140,7 +153,8 @@
 				inspirations: inspirations,
 				waitTimeSeconds: waitTimeSeconds,
 				browseTimeMinutes: browseTimeMinutes,
-				schedule: schedule
+				schedule: schedule,
+				limitation, limitation
             }
         });
         ractive.on({
@@ -172,14 +186,14 @@
 		ractive.observe('waitTimeSeconds', function( newValue, oldValue, keypath ) {
 			if (newValue && typeof newValue === 'number' && newValue >= 0) {
 				waitTimeSeconds = Math.floor(newValue);
+				saveSettings();
 			}
-            saveSettings();
 		}, false);
 		ractive.observe('browseTimeMinutes', function( newValue, oldValue, keypath ) {
 			if (newValue && typeof newValue === 'number' && newValue >= 1) {
 				browseTimeMinutes = Math.floor(newValue);
+				saveSettings();
 			}
-            saveSettings();
 		}, false);
 		ractive.observe('schedule.active', function( newValue, oldValue, keypath ) {
 			var newHidden = newValue ? "" : "hidden";
@@ -197,6 +211,19 @@
 		ractive.observe('schedule.details.weekdays', function( newValue, oldValue, keypath ) {
 			schedule.details.weekdays = newValue;
 			saveSettings();
+		}, false);
+		ractive.observe('limitation.active', function( newValue, oldValue, keypath ) {
+			var newHidden = newValue ? "" : "hidden";
+			ractive.set('limitation.hidden', newHidden);
+			limitation.active = newValue;
+			limitation.hidden = newHidden;
+			saveSettings();
+		}, false);
+		ractive.observe('limitation.details.limit', function( newValue, oldValue, keypath ) {
+			if (newValue && typeof newValue === 'number' && newValue >= 1) {
+				limitation.details.limit = Math.floor(newValue);
+				saveSettings();
+			}
 		}, false);
     }
     loadSettings();
