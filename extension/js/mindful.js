@@ -42,28 +42,32 @@ function removeClassName(ele, className) {
 	var waitIntervalId;
 	var schedule;
 	var limitation;
+	var photoSettings;
+	var pendingPhotoUpdate = false;
 
-    // Storage:
-    // {
-    //     "websites": ["foo.com", "bar.com"],
-    //     "inspirations": ["go for a walk", "etc"],
-    //     "timeouts": [
-    //         	{
-	//				"url": "foo.com",
-	//				"active": true,
-	//				"exp_time": 1234532341231,  // ms since epoch when timeout expires
-	//				"prev_timeouts": [ 1234532341231, 1234532341231, 1234532341231 ]  // start times of previous timeout periods
-	//			}
-    //     ],
-    //     "currentPhoto": {
-    //         "next_update": 12312431242,
-    //         "credit": "Chris Gin",
-    //         "credit_url": "http://chrisgin.com",
-    //         "start_date": 1404448425891,
-    //         "start_date_human": "June 26 2014",
-    //         "url": "https://mindfulbrowsing.org/photos/2.jpg"
-    //     }
-    // }
+	/*
+    Storage:
+    {
+        "websites": ["foo.com", "bar.com"],
+        "inspirations": ["go for a walk", "etc"],
+        "timeouts": [
+            	{
+					"url": "foo.com",
+					"active": true,
+					"exp_time": 1234532341231,  // ms since epoch when timeout expires
+					"prev_timeouts": [ 1234532341231, 1234532341231, 1234532341231 ]  // start times of previous timeout periods
+				}
+        ],
+        "currentPhoto": {
+			"last_updated": 12312431242,
+			"info": {
+				"credit": "Chris Gin",
+				"credit_url": "http://chrisgin.com",
+				"url": "https://mindfulbrowsing.org/photos/2.jpg"
+			}
+        }
+    }
+	*/
 
     chrome.storage.sync.get(null, function(settings) {
       websites = settings.websites || {};
@@ -74,6 +78,7 @@ function removeClassName(ele, className) {
 	  limitation = settings.limitation || {};
       timeouts = settings.timeouts || {};
       currentPhoto = settings.currentPhoto || {};
+	  photoSettings = settings.photo || {};
       initialized = true;
       syncFinished = true;
       initIfReady();
@@ -181,7 +186,6 @@ function removeClassName(ele, className) {
     mindfulBrowsing.addOverlay = function() {
         inspiration = inspirations[Math.floor(Math.random() * inspirations.length)].title;
         var body = document.body;
-        // console.log(currentPhoto)
 
         var ele = document.createElement("div");
 		ele.classList.add("hidden");
@@ -198,17 +202,17 @@ function removeClassName(ele, className) {
 				"<a class='mindfulBtn' id='mindfulBrowsingLeave' href='javascript:window.open(location,\"_self\");window.close();'>Actually, nah.</a>",
 			"</div>",
 		"</div>",
-        "<a href='" + currentPhoto["credit_url"] + "' id='mindfulBrowsingPhotoCredit'>Photo by " + currentPhoto["credit"] + "</a>"
         ].join("");
-        ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,0.92) 100%)";
-
-        // ele.style.backgroundImage = "url('" + currentPhoto["url"] + "')";
-        // console.log('base64')
-        // console.log(base64)
-        if (base64 != undefined) {
-            ele.style.background = "inherit";
-            ele.style.backgroundColor = "rgba(97, 144, 187, 0.92)";
-            ele.style.backgroundImage = "url(" + base64 + ")";
+		
+        ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,0.95) 100%)";
+		
+        if (photoSettings.active) {
+			ele.innerHTML += "<a href='" + currentPhoto.info.credit_url + "' id='mindfulBrowsingPhotoCredit'>Photo by " + currentPhoto.info.credit + "</a>";
+			if(!pendingPhotoUpdate && base64 != undefined) {
+				ele.style.background = "inherit";
+				ele.style.backgroundColor = "rgba(97, 144, 187, 0.92)";
+				ele.style.backgroundImage = "url(" + base64 + ")";
+			}
         }
         ele.style.backgroundSize = "cover";
         ele.style.backgroundPosition = "center center";
@@ -282,46 +286,44 @@ function removeClassName(ele, className) {
 	
     function init() {
         var now = new Date();
-        if (base64 === undefined || currentPhoto["next_update"] === undefined || currentPhoto["next_update"] < now.getTime()) {
-            var photo_index = 0;
-            for (photo_index=0; photo_index<window.mindfulBrowsing.photoInfo.photos.length; photo_index++) {
-                if (window.mindfulBrowsing.photoInfo.photos[photo_index]["start_date"] > now.getTime()) {
-                    break;
-                }
-            }
-            photo_index = (photo_index > 0) ? photo_index: 1;
-            currentPhoto = window.mindfulBrowsing.photoInfo.photos[photo_index-1];
-            currentPhoto["next_update"] = now.getTime() + (1000*60*60*2);
+		
+		if (photoSettings && photoSettings.active) {
+			
+			var photoRotateTimeDiff = photoSettings.details.periods * photoSettings.details.period_value_seconds * 1000;
+			
+			if (base64 === undefined || currentPhoto.last_updated === undefined || currentPhoto.last_updated + photoRotateTimeDiff < now.getTime()) {
+				var photo_index = Math.floor(Math.random() * window.mindfulBrowsing.photoInfo.photos.length);
+				currentPhoto = {};
+				currentPhoto.info = window.mindfulBrowsing.photoInfo.photos[photo_index];
+				currentPhoto.last_updated = now.getTime();
+				mindfulBrowsing.saveSettings();
 
-            // Cache the photo offline.
-            // console.log("opening request")
-            // console.log(currentPhoto.url)    
-            var xmlHTTP = new XMLHttpRequest();
-            xmlHTTP.open('GET', currentPhoto.url, true);
-            xmlHTTP.responseType = 'arraybuffer';
-            xmlHTTP.onload = function(e) {
-                // console.log("responded")
-                var arr = new Uint8Array(this.response);
-                var raw = '';
-                var i,j,subArray,chunk = 5000;
-                for (i=0,j=arr.length; i<j; i+=chunk) {
-                   subArray = arr.subarray(i,i+chunk);
-                   raw += String.fromCharCode.apply(null, subArray);
-                }
-                var b64=btoa(raw);
-                base64 = "data:image/jpeg;base64,"+b64;
-                // console.log("base64")
-                // console.log(base64)
-                mindfulBrowsing.saveSettings();
-                // If we're out of sync, update the image.
+				// Cache the photo offline.  
+				var xmlHTTP = new XMLHttpRequest();
+				xmlHTTP.open('GET', currentPhoto.info.url, true);
+				xmlHTTP.responseType = 'arraybuffer';
+				xmlHTTP.onload = function(e) {
+					var arr = new Uint8Array(this.response);
+					var raw = '';
+					var i,j,subArray,chunk = 5000;
+					for (i=0,j=arr.length; i<j; i+=chunk) {
+					   subArray = arr.subarray(i,i+chunk);
+					   raw += String.fromCharCode.apply(null, subArray);
+					}
+					var b64=btoa(raw);
+					base64 = "data:image/jpeg;base64,"+b64;
+					mindfulBrowsing.saveSettings();
 
-                var ele = document.getElementById("mindfulBrowsingConfirm");
-                ele.style.backgroundImage = "url(" + base64 + ")";
-            };
-            // console.log(xmlHTTP)
-            xmlHTTP.send();
-            mindfulBrowsing.saveSettings();
-        }
+					var ele = document.getElementById("mindfulBrowsingConfirm");
+					if(ele)
+						ele.style.backgroundImage = "url(" + base64 + ")";
+					
+					pendingPhotoUpdate = false;
+				};
+				pendingPhotoUpdate = true;
+				xmlHTTP.send();
+			}
+		}
 		
 		if ( mindfulBrowsing.isActive() ) {
 			for (var i in websites) {

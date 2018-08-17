@@ -42,6 +42,28 @@
 			period_hours: 2
 		}
 	};
+	var photo = {
+		active: true,
+		hidden: "",
+		details: {
+			periods: 2,
+			period_value_seconds: 3600
+		}
+	};
+	var periodValues = [
+		{
+			label: "minute(s)",
+			value: 60
+		},
+		{
+			label: "hour(s)",
+			value: 60*60
+		},
+		{
+			label: "day(s)",
+			value: 60*60*24
+		}
+	];
 
     var initialized = false;
 
@@ -65,6 +87,7 @@
                 "inspirations": saveInspirations,
 				"waitTimeSeconds": waitTimeSeconds,
 				"browseTimeMinutes": browseTimeMinutes,
+				"photo": photo,
 				"schedule": schedule,
 				"limitation": limitation
             }, function() {
@@ -87,6 +110,9 @@
 			}
 			if (settings.browseTimeMinutes) {
 				browseTimeMinutes = settings.browseTimeMinutes;
+			}
+			if(settings.photo) {
+				photo = settings.photo;
 			}
 			if(settings.schedule) {
 				  schedule = settings.schedule;
@@ -123,6 +149,20 @@
 			'<div class="settings">'+
 			'	<div class="setting"><label class="main">Wait</label><input type="text" value="{{waitTimeSeconds}}" /> <span class="label">seconds</span></div>'+
 			'	<div class="setting"><label class="main">Browse</label><input type="text" value="{{browseTimeMinutes}}" /> <span class="label">minutes</span></div>'+
+			'	{{#photo}}'+
+			'	<div class="setting">'+
+			'		<label class="main">Photo</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
+			'		<div class="detail photo {{hidden}}">'+
+			'			{{#details}}'+
+			'			<div class="detailItem">Rotate every <input type="text" value="{{periods}}" /><select value="{{period_value_seconds}}">'+
+			'				{{#periodValues:num}}'+
+			'				<option value="{{value}}">{{label}}</option>'+
+			'				{{/periodValues}}'+
+			'			</select></div>'+
+			'			{{/details}}'+
+			'		</div>'+
+			'	</div>'+
+			'	{{/photo}}'+
 			'	{{#schedule}}'+
 			'	<div class="setting">'+
 			'		<label class="main">Schedule</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
@@ -156,8 +196,10 @@
 				inspirations: inspirations,
 				waitTimeSeconds: waitTimeSeconds,
 				browseTimeMinutes: browseTimeMinutes,
+				photo: photo,
 				schedule: schedule,
-				limitation, limitation
+				limitation, limitation,
+				periodValues: periodValues
             }
         });
         ractive.on({
@@ -233,6 +275,22 @@
 				limitation.details.period_hours = Math.floor(newValue);
 				saveSettings();
 			}
+		}, false);
+		ractive.observe('photo.active', function( newValue, oldValue, keypath ) {
+			var newHidden = newValue ? "" : "hidden";
+			ractive.set('photo.hidden', newHidden);
+			photo.active = newValue;
+			photo.hidden = newHidden;
+			saveSettings();
+		}, false);
+		ractive.observe('photo.details.periods', function( newValue, oldValue, keypath ) {
+			if (newValue && typeof newValue === 'number' && newValue >= 1) {
+				photo.details.periods = Math.floor(newValue);
+				saveSettings();
+			}
+		}, false);
+		ractive.observe('photo.details.period_value_seconds', function( newValue, oldValue, keypath ) {
+			saveSettings();
 		}, false);
 		
 		initialized = true;
