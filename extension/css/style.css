@@ -170,7 +170,7 @@ q:before, #mindfulBrowsingConfirm q:after {
     padding-bottom: 0;
 }
 #mindfulBrowsingPopup #container {
-    padding: 30px;
+    padding: 30px 30px 150px 30px;
 }
 #mindfulBrowsingPopup h1, #mindfulBrowsingPopup h2 {
     color: #73c8f7;

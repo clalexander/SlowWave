@@ -120,11 +120,12 @@ function removeClassName(ele, className) {
 		}
 		
 		var now = new Date();
-		var hour_ago = now.getTime() - 60*60*1000;
+		var period_hours = limitation.details.period_hours ? limitation.details.period_hours : 2;
+		var limit_period_start = now.getTime() - period_hours * 60*60*1000;
 		
 		timeouts = timeouts.filter(function(timeout) {
 			timeout.prev_timeouts = timeout.prev_timeouts.filter(function(prev_timeout) {
-				return prev_timeout >= hour_ago;
+				return prev_timeout >= limit_period_start;
 			});
 			return timeout.active || timeout.prev_timeouts.length > 0;
 		});

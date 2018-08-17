@@ -38,7 +38,8 @@
 		active: true,
 		hidden: "",
 		details: {
-			limit: 3
+			limit: 3,
+			period_hours: 2
 		}
 	};
 
@@ -74,28 +75,30 @@
     var loadSettings = function() {
         // Save it using the Chrome extension storage API.
         chrome.storage.sync.get(null, function(settings) {
-          // Notify that we saved.
-          if (settings.websites) {
-            websites = settings.websites;  
-          }
-          if (settings.inspirations) {
-            inspirations = settings.inspirations;
-          }
-		  if (settings.waitTimeSeconds) {
-			waitTimeSeconds = settings.waitTimeSeconds;
-		  }
-		  if (settings.browseTimeMinutes) {
-			browseTimeMinutes = settings.browseTimeMinutes;
-		  }
-		  if(settings.schedule) {
-			  schedule = settings.schedule;
-		  }
-		  if(settings.limitation) {
-			  limitation = settings.limitation;
-		  }
+			// Notify that we saved.
+			if (settings.websites) {
+				websites = settings.websites;  
+			}
+			if (settings.inspirations) {
+				inspirations = settings.inspirations;
+			}
+			if (settings.waitTimeSeconds) {
+				waitTimeSeconds = settings.waitTimeSeconds;
+			}
+			if (settings.browseTimeMinutes) {
+				browseTimeMinutes = settings.browseTimeMinutes;
+			}
+			if(settings.schedule) {
+				  schedule = settings.schedule;
+			}
+			if(settings.limitation) {
+				if(!settings.limitation.details.period_hours) {
+					settings.limitation.details.period_hours = limitation.details.period_hours;
+				}
+				limitation = settings.limitation;
+			}
 
-          init();
-          initialized = true;
+			init();
         });
     };
     var init = function() {
@@ -140,7 +143,7 @@
 			'		<label class="main">Limit</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
 			'		<div class="detail limitation {{hidden}}">'+
 			'			{{#details}}'+
-			'			<div class="detailItem">Maximum <input type="text" value="{{limit}}" /> browsing period(s) per hour</div>'+
+			'			<div class="detailItem">Maximum <input type="text" value="{{limit}}" /> browsing period(s) per <input type="text" value="{{period_hours}}" /> hour(s)</div>'+
 			'			{{/details}}'+
 			'		</div>'+
 			'	</div>'+
@@ -225,6 +228,16 @@
 				saveSettings();
 			}
 		}, false);
+		ractive.observe('limitation.details.period_hours', function( newValue, oldValue, keypath ) {
+			if (newValue && typeof newValue === 'number' && newValue >= 1) {
+				limitation.details.period_hours = Math.floor(newValue);
+				saveSettings();
+			}
+		}, false);
+		
+		initialized = true;
+		saveSettings();
     }
+	
     loadSettings();
 })();
