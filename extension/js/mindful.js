@@ -23,7 +23,7 @@ function removeClassName(ele, className) {
 }
 
 (function() {
-    var websites = [];
+	var websites = [];
     var inspirations = [];
 
     var match = false;
@@ -40,6 +40,7 @@ function removeClassName(ele, className) {
 	var browseTimeMinutes;
 	var currentDelay = 0;
 	var waitIntervalId;
+	var focusPollingIntervalId;
 	var schedule;
 	var limitation;
 	var photoSettings;
@@ -112,7 +113,6 @@ function removeClassName(ele, className) {
                 "base64": base64,
             }}, function() {
               // Notify that we saved.
-              // console.log("saved local")
             });
         }
     };
@@ -250,11 +250,7 @@ function removeClassName(ele, className) {
 			message = "You have reached your limit of  " + limit + "  view" + (limit > 1 ? "s" : "") + " per hour on  " + site_name;
 		} else {
 			message = "Do you want to " + go_verb + " " +site_name+"?"
-			currentDelay = waitTimeSeconds;		
-			removeClassName(document.getElementById("mindfulBrowsingWaitTimer"), "hidden");
-			addClassName(document.getElementById("mindfulBrowsingOptions"), "hidden");
-			mindfulBrowsing.updateWaitTimerDisplay();
-			setTimeout(mindfulBrowsing.resumeWaitTimer, 500);
+			mindfulBrowsing.initWaitTimer();
 		}
 		document.getElementById("mindfulBrowsingMessage").innerHTML = message;
 	};
@@ -265,11 +261,25 @@ function removeClassName(ele, className) {
 				ele.innerHTML = currentDelay;
 		} 
 	};
+	mindfulBrowsing.initWaitTimer = function() {
+		currentDelay = waitTimeSeconds;		
+		removeClassName(document.getElementById("mindfulBrowsingWaitTimer"), "hidden");
+		addClassName(document.getElementById("mindfulBrowsingOptions"), "hidden");
+		mindfulBrowsing.updateWaitTimerDisplay();
+		setTimeout(function() {
+			mindfulBrowsing.resumeWaitTimer();
+			focusPollingIntervalId = setInterval(function() {
+				// poll background script to update tab focus
+				chrome.runtime.sendMessage({ text: "update_tabIsFocused" });
+			}, 250);
+		}, 500);
+	};
 	mindfulBrowsing.updateWaitTimer = function() {
 		currentDelay -= 1;
 		mindfulBrowsing.updateWaitTimerDisplay();
 		if(currentDelay <= 0) {
 			mindfulBrowsing.suspendWaitTimer();
+			clearInterval(focusPollingIntervalId);
 			addClassName(document.getElementById("mindfulBrowsingWaitTimer"), "hidden");
 			removeClassName(document.getElementById("mindfulBrowsingOptions"), "hidden");
 		}
@@ -281,6 +291,15 @@ function removeClassName(ele, className) {
 	mindfulBrowsing.suspendWaitTimer = function() {
 		clearInterval(waitIntervalId);
 		waitIntervalId = null;
+	};
+	mindfulBrowsing.updateTabIsFocused = function(isFocused) {
+		if(waitIntervalId) {			
+			if(!isFocused)
+				mindfulBrowsing.suspendWaitTimer();
+		} else {
+			if(isFocused)
+				mindfulBrowsing.resumeWaitTimer();
+		}
 	};
     window.mindfulBrowsing = mindfulBrowsing;
 	

@@ -1,44 +1,13 @@
-var lastTabId = null;
-
-function isNormalUrl(url) {
-	return url && ((url.indexOf('http://') === 0) || (url.indexOf('https://') === 0));
-}
-
-function trySuspendLastTab() {
-	if(lastTabId) {
-		chrome.tabs.executeScript(lastTabId, { code: "mindfulBrowsing.suspendWaitTimer();" });
-		lastTabId = null;
-	}
-}
-
-function tryResumeTab(tab) {
-	if(isNormalUrl(tab.url) && tab.id) {
-		chrome.tabs.executeScript(tab.id, { code: "mindfulBrowsing.resumeWaitTimer();" });	
-		lastTabId = tab.id;
-	}
-}
-
-function changeTabHandler(info) {
-	trySuspendLastTab();
-	
-	chrome.tabs.get(info.tabId, function(tab) {
-		tryResumeTab(tab);
-	});
-}
-
-function windowFocusChangedHandler(windowId) {
-	trySuspendLastTab();
-	
-	if (windowId != chrome.windows.WINDOW_ID_NONE) {
-		chrome.tabs.getSelected(windowId, function(tab) {
-			tryResumeTab(tab);
+function updateTabFocusHandler(msg, sender) {
+	if (msg.text == "update_tabIsFocused") {
+		chrome.windows.get(sender.tab.windowId, function(window) {
+			chrome.tabs.executeScript(sender.tab.id, { code: "mindfulBrowsing.updateTabIsFocused(" + (sender.tab.active && window.focused) + ");" });
 		});
 	}
 }
 
 function initExtension() {
-	chrome.tabs.onActivated.addListener(changeTabHandler);
-	chrome.windows.onFocusChanged.addListener(windowFocusChangedHandler);
+	chrome.runtime.onMessage.addListener(updateTabFocusHandler);
 }
 
 initExtension();

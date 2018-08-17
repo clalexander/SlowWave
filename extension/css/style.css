@@ -140,13 +140,13 @@ q:before, #mindfulBrowsingConfirm q:after {
     border-radius: 10px;
     text-decoration: none;
     background-color: #CCC;
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255,255,255,0.65);
     color: rgba(0,0,0,0.4);
     transition: background 0.4s ease, color 0.4s ease;
     font-weight: 300;
 }
 #mindfulBrowsingConfirm a.mindfulBtn:hover {
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.85);
     color: rgba(0,0,0,0.6);
 }
 #mindfulBrowsingConfirm #mindfulBrowsingPhotoCredit {
