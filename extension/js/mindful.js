@@ -204,13 +204,13 @@ function removeClassName(ele, className) {
 		"</div>",
         ].join("");
 		
-        ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,0.95) 100%)";
+        ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,1) 100%)";
 		
         if (photoSettings.active) {
 			ele.innerHTML += "<a href='" + currentPhoto.info.credit_url + "' id='mindfulBrowsingPhotoCredit'>Photo by " + currentPhoto.info.credit + "</a>";
 			if(!pendingPhotoUpdate && base64 != undefined) {
 				ele.style.background = "inherit";
-				ele.style.backgroundColor = "rgba(97, 144, 187, 0.92)";
+				ele.style.backgroundColor = "rgba(97, 144, 187, 1)";
 				ele.style.backgroundImage = "url(" + base64 + ")";
 			}
         }
