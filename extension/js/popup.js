@@ -1,8 +1,6 @@
 (function(){
     window.mindfulBrowsing = {};
     var settings = {};
-    var BLANK_WEBSITE = { "url": ""};
-    var BLANK_THING = { "title": ""};
     var websites = [
         { "url": "facebook.com" },
         { "url": "twitter.com" },
@@ -134,7 +132,7 @@
 			'<h2>I want to be mindful of spending my time on:</h2>'+
 			'<div class="responses">'+
 			'	{{#websites:num}}'+
-			'	<div class="response"><label>http://</label><input type="text" value="{{url}}" /><a class="removeX" on-click="removeSite">&#x2716; <span class="label">Remove</span></a></div>'+
+			'	<div class="response"><label>http://</label><input type="text" placeholder="example.url" value="{{url}}" /><a class="removeX" on-click="removeSite">&#x2716; <span class="label">Remove</span></a></div>'+
 			'	{{/websites}}'+
 			'	<div class="response addBtnRow"><a on-click="addSite" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
 			'</div>'+
@@ -204,11 +202,11 @@
         });
         ractive.on({
             addSite: function() {
-                websites.push(BLANK_WEBSITE);
-                return false;
+                websites.push({ "url": ""});
+				return false;
             },
             addInspiration: function() {
-                inspirations.push(BLANK_THING);
+                inspirations.push({ "title": ""});
                 return false;
             },
             removeSite: function(event) {
@@ -221,11 +219,9 @@
             }
         });
         ractive.observe('websites', function ( newValue, oldValue, keypath ) {
-            websites = newValue;
             saveSettings();
         }, false);
         ractive.observe('inspirations', function ( newValue, oldValue, keypath ) {
-            inspirations = newValue;
             saveSettings();
         }, false);
 		ractive.observe('waitTimeSeconds', function( newValue, oldValue, keypath ) {
@@ -240,11 +236,25 @@
 				saveSettings();
 			}
 		}, false);
+		ractive.observe('photo.active', function( newValue, oldValue, keypath ) {
+			var newHidden = newValue ? "" : "hidden";
+			photo.hidden = newHidden;
+			ractive.set('photo.hidden', newHidden);
+			saveSettings();
+		}, false);
+		ractive.observe('photo.details.periods', function( newValue, oldValue, keypath ) {
+			if (newValue && typeof newValue === 'number' && newValue >= 1) {
+				photo.details.periods = Math.floor(newValue);
+				saveSettings();
+			}
+		}, false);
+		ractive.observe('photo.details.period_value_seconds', function( newValue, oldValue, keypath ) {
+			saveSettings();
+		}, false);
 		ractive.observe('schedule.active', function( newValue, oldValue, keypath ) {
 			var newHidden = newValue ? "" : "hidden";
-			ractive.set('schedule.hidden', newHidden);
-			schedule.active = newValue;
 			schedule.hidden = newHidden;
+			ractive.set('schedule.hidden', newHidden);
 			saveSettings();
 		}, false);
 		ractive.observe('schedule.details.times', function( newValue, oldValue, keypath ) {
@@ -254,14 +264,12 @@
 			}
 		}, false);
 		ractive.observe('schedule.details.weekdays', function( newValue, oldValue, keypath ) {
-			schedule.details.weekdays = newValue;
 			saveSettings();
 		}, false);
 		ractive.observe('limitation.active', function( newValue, oldValue, keypath ) {
 			var newHidden = newValue ? "" : "hidden";
-			ractive.set('limitation.hidden', newHidden);
-			limitation.active = newValue;
 			limitation.hidden = newHidden;
+			ractive.set('limitation.hidden', newHidden);
 			saveSettings();
 		}, false);
 		ractive.observe('limitation.details.limit', function( newValue, oldValue, keypath ) {
@@ -275,22 +283,6 @@
 				limitation.details.period_hours = Math.floor(newValue);
 				saveSettings();
 			}
-		}, false);
-		ractive.observe('photo.active', function( newValue, oldValue, keypath ) {
-			var newHidden = newValue ? "" : "hidden";
-			ractive.set('photo.hidden', newHidden);
-			photo.active = newValue;
-			photo.hidden = newHidden;
-			saveSettings();
-		}, false);
-		ractive.observe('photo.details.periods', function( newValue, oldValue, keypath ) {
-			if (newValue && typeof newValue === 'number' && newValue >= 1) {
-				photo.details.periods = Math.floor(newValue);
-				saveSettings();
-			}
-		}, false);
-		ractive.observe('photo.details.period_value_seconds', function( newValue, oldValue, keypath ) {
-			saveSettings();
 		}, false);
 		
 		initialized = true;
