@@ -14,7 +14,7 @@
 	var waitTimeSeconds = 30;
 	var browseTimeMinutes = 10;
 	var schedule = {
-		active: true,
+		active: false,
 		hidden: "",
 		details: {
 			times: {
@@ -33,7 +33,7 @@
 		}
 	};
 	var limitation = {
-		active: true,
+		active: false,
 		hidden: "",
 		details: {
 			limit: 3,
