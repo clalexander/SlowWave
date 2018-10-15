@@ -1,10 +1,13 @@
 (function(){
     window.mindfulBrowsing = {};
     var settings = {};
-    var websites = [
-        { "url": "facebook.com" },
-        { "url": "twitter.com" },
-        { "url": ""}
+    var blockedUrlPatterns = [
+        { "urlPattern": "facebook.com" },
+        { "urlPattern": "twitter.com" },
+        { "urlPattern": ""}
+    ];
+    var allowedUrlPatterns = [
+        { "urlPattern": ""}
     ];
     var inspirations = [
         { "title": "take five deep breaths" },
@@ -13,6 +16,9 @@
     ];
 	var waitTimeSeconds = 30;
 	var browseTimeMinutes = 10;
+	var quickResume = {
+		active: false
+	};
 	var schedule = {
 		active: false,
 		hidden: "",
@@ -68,10 +74,16 @@
     var saveSettings = function() {
         // Save it using the Chrome extension storage API.
         if (initialized === true) {
-            var saveWebsites = [];
-            for (var w in websites) {
-                if (websites[w] && websites[w].url !== "") {
-                    saveWebsites.push(websites[w]);
+            var saveBlockedUrlPatterns = [];
+            for (var p in blockedUrlPatterns) {
+                if (blockedUrlPatterns[p] && blockedUrlPatterns[p].urlPattern !== "") {
+                    saveBlockedUrlPatterns.push(blockedUrlPatterns[p]);
+                }
+            }
+            var saveAllowedUrlPatterns = [];
+            for (var p in allowedUrlPatterns) {
+                if (allowedUrlPatterns[p] && allowedUrlPatterns[p].urlPattern !== "") {
+                    saveAllowedUrlPatterns.push(allowedUrlPatterns[p]);
                 }
             }
             var saveInspirations = [];
@@ -81,10 +93,12 @@
                 }
             }
             chrome.storage.sync.set({
-                "websites": saveWebsites,
+                "blockedUrlPatterns": saveBlockedUrlPatterns,
+                "allowedUrlPatterns": saveAllowedUrlPatterns,
                 "inspirations": saveInspirations,
 				"waitTimeSeconds": waitTimeSeconds,
 				"browseTimeMinutes": browseTimeMinutes,
+				"quickResume": quickResume,
 				"photo": photo,
 				"schedule": schedule,
 				"limitation": limitation
@@ -96,25 +110,14 @@
     var loadSettings = function() {
         // Save it using the Chrome extension storage API.
         chrome.storage.sync.get(null, function(settings) {
-			// Notify that we saved.
-			if (settings.websites) {
-				websites = settings.websites;  
-			}
-			if (settings.inspirations) {
-				inspirations = settings.inspirations;
-			}
-			if (settings.waitTimeSeconds) {
-				waitTimeSeconds = settings.waitTimeSeconds;
-			}
-			if (settings.browseTimeMinutes) {
-				browseTimeMinutes = settings.browseTimeMinutes;
-			}
-			if(settings.photo) {
-				photo = settings.photo;
-			}
-			if(settings.schedule) {
-				  schedule = settings.schedule;
-			}
+			blockedUrlPatterns = settings.blockedUrlPatterns || blockedUrlPatterns;  
+			allowedUrlPatterns = settings.allowedUrlPatterns || allowedUrlPatterns;  
+			inspirations = settings.inspirations || inspirations;
+			waitTimeSeconds = settings.waitTimeSeconds || waitTimeSeconds;
+			browseTimeMinutes = settings.browseTimeMinutes || browseTimeMinutes;
+			quickResume = settings.quickResume || quickResume;
+			photo = settings.photo || photo;
+			schedule = settings.schedule || schedule;
 			if(settings.limitation) {
 				if(!settings.limitation.details.period_hours) {
 					settings.limitation.details.period_hours = limitation.details.period_hours;
@@ -128,13 +131,20 @@
     var init = function() {
         var ractive = new Ractive({
             el: '#container',
-            template: 
+            template:
 			'<h2>I want to be mindful of spending my time on:</h2>'+
 			'<div class="responses">'+
-			'	{{#websites:num}}'+
-			'	<div class="response"><label>http://</label><input type="text" placeholder="example.url" value="{{url}}" /><a class="removeX" on-click="removeSite">&#x2716; <span class="label">Remove</span></a></div>'+
-			'	{{/websites}}'+
-			'	<div class="response addBtnRow"><a on-click="addSite" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
+			'	{{#blockedUrlPatterns:num}}'+
+			'	<div class="response"><label>http://</label><input type="text" placeholder="example.url" value="{{urlPattern}}" /><a class="removeX" on-click="removeBlockedUrl">&#x2716; <span class="label">Remove</span></a></div>'+
+			'	{{/blockedUrlPatterns}}'+
+			'	<div class="response addBtnRow"><a on-click="addBlockedUrl" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
+			'</div>'+
+			'<h2>...but I\'m okay spending my time on:</h2>'+
+			'<div class="responses">'+
+			'	{{#allowedUrlPatterns:num}}'+
+			'	<div class="response"><label>http://</label><input type="text" placeholder="example.url" value="{{urlPattern}}" /><a class="removeX" on-click="removeAllowedUrl">&#x2716; <span class="label">Remove</span></a></div>'+
+			'	{{/allowedUrlPatterns}}'+
+			'	<div class="response addBtnRow"><a on-click="addAllowedUrl" class="addX" >&#x271A; <span class="label">Add another</span></a></div>'+
 			'</div>'+
 			'<h2>Inspirations:</h2>'+
 			'<div class="responses inspirations">'+
@@ -147,6 +157,11 @@
 			'<div class="settings">'+
 			'	<div class="setting"><label class="main">Wait</label><input type="text" value="{{waitTimeSeconds}}" /> <span class="label">seconds</span></div>'+
 			'	<div class="setting"><label class="main">Browse</label><input type="text" value="{{browseTimeMinutes}}" /> <span class="label">minutes</span></div>'+
+			'	{{#quickResume}}'+
+			'	<div class="setting">'+
+			'		<label class="main">Quick Resume</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
+			'	</div>'+
+			'	{{/quickResume}}'+
 			'	{{#photo}}'+
 			'	<div class="setting">'+
 			'		<label class="main">Photo</label><label class="switch"><input type="checkbox" checked="{{active}}" /><span class="slider"></span></label>'+
@@ -190,10 +205,12 @@
 			'',
             data: {
 				name: 'world',
-				websites: websites,
+				blockedUrlPatterns: blockedUrlPatterns,
+				allowedUrlPatterns: allowedUrlPatterns,
 				inspirations: inspirations,
 				waitTimeSeconds: waitTimeSeconds,
 				browseTimeMinutes: browseTimeMinutes,
+				quickResume: quickResume,
 				photo: photo,
 				schedule: schedule,
 				limitation, limitation,
@@ -201,16 +218,24 @@
             }
         });
         ractive.on({
-            addSite: function() {
-                websites.push({ "url": ""});
+            addBlockedUrl: function() {
+                blockedUrlPatterns.push({ "urlPattern": ""});
+				return false;
+            },
+            addAllowedUrl: function() {
+                allowedUrlPatterns.push({ "urlPattern": ""});
 				return false;
             },
             addInspiration: function() {
                 inspirations.push({ "title": ""});
                 return false;
             },
-            removeSite: function(event) {
-                websites.splice(event.index.num, 1);
+            removeBlockedUrl: function(event) {
+                blockedUrlPatterns.splice(event.index.num, 1);
+                return false;
+            },
+            removeAllowedUrl: function(event) {
+                allowedUrlPatterns.splice(event.index.num, 1);
                 return false;
             },
             removeInspiration: function(event) {
@@ -218,7 +243,10 @@
                 return false;
             }
         });
-        ractive.observe('websites', function ( newValue, oldValue, keypath ) {
+        ractive.observe('blockedUrlPatterns', function ( newValue, oldValue, keypath ) {
+            saveSettings();
+        }, false);
+        ractive.observe('allowedUrlPatterns', function ( newValue, oldValue, keypath ) {
             saveSettings();
         }, false);
         ractive.observe('inspirations', function ( newValue, oldValue, keypath ) {
@@ -235,6 +263,9 @@
 				browseTimeMinutes = Math.floor(newValue);
 				saveSettings();
 			}
+		}, false);
+		ractive.observe('quickResume.active', function( newValue, oldValue, keypath ) {
+			saveSettings();
 		}, false);
 		ractive.observe('photo.active', function( newValue, oldValue, keypath ) {
 			var newHidden = newValue ? "" : "hidden";

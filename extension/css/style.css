@@ -149,6 +149,39 @@ q:before, #mindfulBrowsingConfirm q:after {
     background-color: rgba(255, 255, 255, 0.85);
     color: rgba(0,0,0,0.6);
 }
+#mindfulBrowsingConfirm .mindfulBrowsingQuickResume {
+	display: block;
+	position: absolute;
+	right: 45px;
+	top: 30px;
+	text-align: center;
+    transition: all 0.4s ease;
+	opacity: 0.15;
+}
+#mindfulBrowsingConfirm .mindfulBrowsingQuickResume:hover {
+	opacity: 1;
+	cursor: pointer;
+}
+#mindfulBrowsingConfirm .mindfulBrowsingQuickResume h1 {
+	font-size: 100px;
+	font-weight: 600;
+	margin: 0;
+	line-height: 1;
+}
+#mindfulBrowsingConfirm .mindfulBrowsingQuickResume h2 {
+	position: relative;
+	font-size: 24px;
+	font-weight: 100;
+	line-height: 1;
+	margin: 0;
+	opacity: 0;
+	top: 1em;
+    transition: all 0.4s ease;
+}
+#mindfulBrowsingConfirm .mindfulBrowsingQuickResume:hover h2 {
+	opacity: 0.8;
+	top: -0.25em;
+}
 #mindfulBrowsingConfirm #mindfulBrowsingPhotoCredit {
     position: fixed;
     bottom: 10px;
@@ -348,7 +381,7 @@ q:before, #mindfulBrowsingConfirm q:after {
     width: 445px;
 }
 #mindfulBrowsingPopup .setting > label {
-	width: 100px;
+	width: 135px;
 	font-size: 20px;
 	padding-bottom: 6px;
 }

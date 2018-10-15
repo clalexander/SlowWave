@@ -23,7 +23,8 @@ function removeClassName(ele, className) {
 }
 
 (function() {
-	var websites = [];
+	var blockedUrlPatterns = [];
+	var allowedUrlPatterns = [];
     var inspirations = [];
 
     var match = false;
@@ -38,6 +39,7 @@ function removeClassName(ele, className) {
     var base64;
 	var waitTimeSeconds;
 	var browseTimeMinutes;
+	var quickResume;
 	var currentDelay = 0;
 	var waitIntervalId;
 	var focusPollingIntervalId;
@@ -49,11 +51,20 @@ function removeClassName(ele, className) {
 	/*
     Storage:
     {
-        "websites": ["foo.com", "bar.com"],
+        "blockedUrlPatterns": [
+			{
+				"urlPattern": "foo.com"
+			}
+		],
+        "allowedUrlPatterns": [
+			{
+				"urlPattern": "foo.com"
+			}
+		],
         "inspirations": ["go for a walk", "etc"],
         "timeouts": [
             	{
-					"url": "foo.com",
+					"urlPattern": "foo.com",
 					"active": true,
 					"exp_time": 1234532341231,  // ms since epoch when timeout expires
 					"prev_timeouts": [ 1234532341231, 1234532341231, 1234532341231 ]  // start times of previous timeout periods
@@ -71,10 +82,12 @@ function removeClassName(ele, className) {
 	*/
 
     chrome.storage.sync.get(null, function(settings) {
-      websites = settings.websites || {};
+      blockedUrlPatterns = settings.blockedUrlPatterns || [];
+      allowedUrlPatterns = settings.allowedUrlPatterns || [];
       inspirations = settings.inspirations || {};
 	  waitTimeSeconds = settings.waitTimeSeconds || 30;
 	  browseTimeMinutes = settings.browseTimeMinutes || 10;
+	  quickResume = settings.quickResume || { active: false };
 	  schedule = settings.schedule || {};
 	  limitation = settings.limitation || {};
       timeouts = settings.timeouts || {};
@@ -143,7 +156,7 @@ function removeClassName(ele, className) {
 			return true;
 		
 		with (schedule.details) {
-			if ( !schedule.details.weekdays[now.getDay()].active )
+			if ( !weekdays[now.getDay()].active )
 				return false
 			
 			var nowTime = lzero(now.getHours()) + ":" + lzero(now.getMinutes());
@@ -160,13 +173,13 @@ function removeClassName(ele, className) {
 		
 		return true;
 	};
-    mindfulBrowsing.confirmClicked = function() {
+    mindfulBrowsing.addBrowsingTimeout = function() {
         var now = new Date();
         var timeout_diff = (browseTimeMinutes*60000);
-		var i = timeouts.indexOf(site_name, "url");
+		var i = timeouts.indexOf(site_name, "urlPattern");
 		if( i < 0 ) {
 			timeouts.push({
-				url: site_name,
+				urlPattern: site_name,
 				active: false,
 				exp_time: 0,
 				prev_timeouts: []
@@ -186,11 +199,11 @@ function removeClassName(ele, className) {
     mindfulBrowsing.addOverlay = function() {
         inspiration = inspirations[Math.floor(Math.random() * inspirations.length)].title;
         var body = document.body;
-
+		
         var ele = document.createElement("div");
 		ele.classList.add("hidden");
         ele.id="mindfulBrowsingConfirm";
-        ele.innerHTML = [
+        var innerHTML = [
         "<div class='mindfulBrowsingHeading'>",
             "<h1 id='mindfulBrowsingMessage'></h1>",
             "<h2>"+inspiration+"</h2>",
@@ -203,6 +216,17 @@ function removeClassName(ele, className) {
 			"</div>",
 		"</div>",
         ].join("");
+		
+		if( quickResume.active ) {
+			innerHTML += [
+				"<div class='mindfulBrowsingQuickResume' id='mindfulBrowsingQuickResumeButton'>",
+					"<h1>!</h1>",
+					"<h2>resume</h2>",
+				"</div>"
+			].join("");
+		}
+		
+		ele.innerHTML = innerHTML;
 		
         ele.style.background = "linear-gradient(to bottom, rgba(97,144,187,1) 0%,rgba(191,227,255,1) 100%)";
 		
@@ -222,8 +246,12 @@ function removeClassName(ele, className) {
 			removeClassName(ele, "hidden");
 		}, 0);
         
-        btn = document.getElementById("mindfulBrowsingContinue");
-        btn.onclick = mindfulBrowsing.confirmClicked;
+        var btn = document.getElementById("mindfulBrowsingContinue");
+        btn.onclick = mindfulBrowsing.addBrowsingTimeout;
+		
+		var resumeBtn = document.getElementById("mindfulBrowsingQuickResumeButton");
+		if( resumeBtn )
+			resumeBtn.onclick = mindfulBrowsing.addBrowsingTimeout;
 		
 		mindfulBrowsing.updateOverlay();
     };
@@ -241,8 +269,8 @@ function removeClassName(ele, className) {
 	};
 	mindfulBrowsing.updateOverlay = function() {
 		var message;
-        var go_verb = (was_in_timeout)? "stay on" : "spend time on";		
-		var i = timeouts.indexOf(site_name, "url");
+        var go_verb = (was_in_timeout)? "stay on" : "spend time on";
+		var i = timeouts.indexOf(site_name, "urlPattern");
 		var limit = limitation.details.limit;
 		var limit_hit = (i >= 0 && limitation.active && timeouts[i].prev_timeouts.length >= limit);
 		
@@ -303,9 +331,41 @@ function removeClassName(ele, className) {
 	};
     window.mindfulBrowsing = mindfulBrowsing;
 	
+	function matchUrlPattern(urlPattern, url) {
+		var regexPattern = urlPattern;
+		regexPattern = regexPattern.replace(/\^/g, "\^");
+		regexPattern = regexPattern.replace(/\$/g, "\$");
+		regexPattern = regexPattern.replace(/\?/g, "\?");
+		regexPattern = regexPattern.replace(/\//g, "\/");
+		regexPattern = regexPattern.replace(/[\.]/g, "\\.");
+		regexPattern = regexPattern.replace(/[*]/g, ".*");
+		if ( !urlPattern.match(/^((http[s]?|ftp):\/\/|[^\w\d\-_])/i) ) regexPattern = "(?:^|[\\.\/])" + regexPattern;
+		var regex = new RegExp(regexPattern, "i");
+		var urlMatch = url.match(regex);
+		if ( urlMatch ) {
+			if ( urlMatch[0].match(/[\?#]/) ) {
+				regexPattern = regexPattern + "(?:[\-\+=&;%@\\._]|$)";
+			} else if ( urlMatch[0].match(/[\w\d\-_]$/) ) {
+				regexPattern = regexPattern + "(?:[\\.\/]|$)";
+			}
+			regex = new RegExp(regexPattern);
+			return regex.test(url);
+		}
+		return false;
+	}
+	
+	function isAllowedUrl(url) {
+		for (var p in allowedUrlPatterns) {
+			if(matchUrlPattern(allowedUrlPatterns[p].urlPattern, url))
+				return true;
+		}
+		return false;
+	}
+	
     function init() {
         var now = new Date();
 		
+		// Load photo
 		if (photoSettings && photoSettings.active) {
 			
 			var photoRotateTimeDiff = photoSettings.details.periods * photoSettings.details.period_value_seconds * 1000;
@@ -345,13 +405,14 @@ function removeClassName(ele, className) {
 		}
 		
 		if ( mindfulBrowsing.isActive() ) {
-			for (var i in websites) {
-				if (href.indexOf(websites[i].url) != -1) {
-					site_name = websites[i].url;
+			for (var i in blockedUrlPatterns) {
+				var blockedUrlPattern = blockedUrlPatterns[i].urlPattern;
+				if ( matchUrlPattern(blockedUrlPattern, href) && !isAllowedUrl(href) ) {
 					match = true;
+					site_name = blockedUrlPattern;
 					// Check timeouts
 					mindfulBrowsing.trimTimeouts();
-					var j = timeouts.indexOf(site_name, "url");
+					var j = timeouts.indexOf(site_name, "urlPattern");
 					if (j >= 0) {
 						with(timeouts[j]) {
 							if(active) {
