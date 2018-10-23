@@ -137,13 +137,11 @@ function removeClassName(ele, className) {
 			mindfulBrowsing.saveSettings();
 		}
 		
-		var now = new Date();
-		var period_hours = limitation.details.period_hours ? limitation.details.period_hours : 2;
-		var limit_period_start = now.getTime() - period_hours * 60*60*1000;
+		var midnight = (new Date()).setHours(0,0,0,0);
 		
 		timeouts = timeouts.filter(function(timeout) {
 			timeout.prev_timeouts = timeout.prev_timeouts.filter(function(prev_timeout) {
-				return prev_timeout >= limit_period_start;
+				return prev_timeout >= midnight;
 			});
 			return timeout.active || timeout.prev_timeouts.length > 0;
 		});
@@ -206,6 +204,7 @@ function removeClassName(ele, className) {
         var innerHTML = [
         "<div class='mindfulBrowsingHeading'>",
             "<h1 id='mindfulBrowsingMessage'></h1>",
+			"<h3 id='mindfulBrowsingNumSessions'></h3>",
             "<h2>"+inspiration+"</h2>",
         "</div>",
 		"<div class='mindfulBrowsingBody'>",
@@ -270,17 +269,25 @@ function removeClassName(ele, className) {
 	mindfulBrowsing.updateOverlay = function() {
 		var message;
         var go_verb = (was_in_timeout)? "stay on" : "spend time on";
-		var i = timeouts.indexOf(site_name, "urlPattern");
 		var limit = limitation.details.limit;
-		var limit_hit = (i >= 0 && limitation.active && timeouts[i].prev_timeouts.length >= limit);
+		var limit_hit = isLimitHit(site_name);
 		
 		if ( limit_hit ) {
 			message = "You have reached your limit of  " + limit + "  view" + (limit > 1 ? "s" : "") + " per hour on  " + site_name;
 		} else {
-			message = "Do you want to " + go_verb + " " +site_name+"?"
+			message = "Do you want to " + go_verb + " " + site_name + "?";
 			mindfulBrowsing.initWaitTimer();
 		}
 		document.getElementById("mindfulBrowsingMessage").innerHTML = message;
+		
+		var numSessions = 0;
+		var i = timeouts.indexOf(site_name, "urlPattern");
+		if ( i >= 0 ) {
+			numSessions = timeouts[i].prev_timeouts.length;
+		}
+		if ( numSessions > 0 ) {
+			document.getElementById("mindfulBrowsingNumSessions").innerHTML = "(You've had " + numSessions + " session" + (numSessions > 1 ? "s" : "") + " on this site today)";
+		}
 	};
 	mindfulBrowsing.updateWaitTimerDisplay = function() {
 		if(currentDelay > 0) {
@@ -330,6 +337,21 @@ function removeClassName(ele, className) {
 		}
 	};
     window.mindfulBrowsing = mindfulBrowsing;
+	
+	function isLimitHit(site) {
+		if ( !limitation.active ) {
+			return false;
+		}
+		var i = timeouts.indexOf(site, "urlPattern");
+		if ( i < 0 ) {
+			return false;
+		}
+		var period_hours = limitation.details.period_hours || 2;
+		var limit_period_start = (new Date()).getTime() - period_hours * 60*60*1000;
+		var limit = limitation.details.limit;
+		var timeoutsWithinPeriod = timeouts[i].prev_timeouts.filter(function(prev_timeout) { return prev_timeout > limit_period_start; } ).length;
+		return timeoutsWithinPeriod >= limit;
+	}
 	
 	function matchesUrlPattern(urlPattern, url) {
 		var regexPattern = urlPattern;

@@ -105,17 +105,21 @@ q:before, #mindfulBrowsingConfirm q:after {
     -webkit-margin-start: 0px;
     -webkit-margin-end: 0px;
 }
-#mindfulBrowsingConfirm h1, #mindfulBrowsingConfirm h2, #mindfulBrowsingConfirm .timer {
+#mindfulBrowsingConfirm h1, #mindfulBrowsingConfirm h2, #mindfulBrowsingConfirm h3, #mindfulBrowsingConfirm .timer {
     color: rgba(255, 255, 255, 0.9);
     font-weight: 200;
-    font-size: 32px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
 }
 #mindfulBrowsingConfirm h1 {
-    margin-bottom: 60px;
+    font-size: 32px;
+    margin-bottom: 10px;
 }
 #mindfulBrowsingConfirm h2 {
-    font-size: 24px;
+    font-size: 26px;
+}
+#mindfulBrowsingConfirm h3 {
+	font-size: 20px;
+    margin-bottom: 80px;
 }
 #mindfulBrowsingConfirm .timer {
 	font-size: 100px;
