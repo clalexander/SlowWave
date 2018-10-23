@@ -331,7 +331,7 @@ function removeClassName(ele, className) {
 	};
     window.mindfulBrowsing = mindfulBrowsing;
 	
-	function matchUrlPattern(urlPattern, url) {
+	function matchesUrlPattern(urlPattern, url) {
 		var regexPattern = urlPattern;
 		regexPattern = regexPattern.replace(/\^/g, "\^");
 		regexPattern = regexPattern.replace(/\$/g, "\$");
@@ -356,10 +356,70 @@ function removeClassName(ele, className) {
 	
 	function isAllowedUrl(url) {
 		for (var p in allowedUrlPatterns) {
-			if(matchUrlPattern(allowedUrlPatterns[p].urlPattern, url))
+			if(matchesUrlPattern(allowedUrlPatterns[p].urlPattern, url))
 				return true;
 		}
 		return false;
+	}
+	
+	// heuristic
+	function isMoreRestrictiveUrlPattern(testPattern, comparePattern) {
+		// first test how they compare to each other as if they were urls themselves
+		var compareMatchesTest = matchesUrlPattern(testPattern, comparePattern);
+		var testMatchesCompare = matchesUrlPattern(comparePattern, testPattern);
+		if ( compareMatchesTest == false && testMatchesCompare == true ) {
+			return true;
+		} else if ( compareMatchesTest == true && testMatchesCompare == false ) {
+			return false;
+		}
+		// next compare their number of wildcards, more restrictive having fewer
+		var compareNumWildcards = numWildcards(comparePattern);
+		var testNumWildcards = numWildcards(testPattern);
+		if ( testNumWildcards < compareNumWildcards ) {
+			return true;
+		} else if ( compareNumWildcards < testNumWildcards ) {
+			return false;
+		}
+		// next compare the number of wildcards they have on their ends, more restrictive having fewer
+		var compareNumTerminatingWildcards = numTerminatingWildcards(comparePattern);
+		var testNumTerminatingWildcards = numTerminatingWildcards(testPattern);
+		if ( testNumTerminatingWildcards < compareNumTerminatingWildcards ) {
+			return true;
+		} else if ( compareNumTerminatingWildcards < testNumTerminatingWildcards ) {
+			return false;
+		}
+		// finally compare their lengths, more restrictive being longer
+		return testPattern.length > comparePattern.length;
+	}
+	
+	function numWildcards(pattern) {
+		return (pattern.match(/\*/g) || []).length;
+	}
+	
+	function numTerminatingWildcards(pattern) {
+		return (startsWithWildcard(pattern) ? 1 : 0) + (endsWithWildcard(pattern) ? 1 : 0);
+	}
+	
+	function startsWithWildcard(pattern) {
+		return pattern.test(/^\*/);
+	}
+	
+	function endsWithWildcard(pattern) {
+		return pattern.test(/\*$/);
+	}
+	
+	// simple linear analysis
+	function getMostRestrictiveBlockedUrlPattern(url) {
+		var mostRestrictivePattern = false;
+		for ( var i in blockedUrlPatterns ) {
+			blockedUrlPattern = blockedUrlPatterns[i].urlPattern;
+			if(matchesUrlPattern(blockedUrlPattern, url)) {
+				if(mostRestrictivePattern == false || (mostRestrictivePattern != blockedUrlPattern && isMoreRestrictiveUrlPattern(blockedUrlPattern, mostRestrictivePattern))) {
+					mostRestrictivePattern = blockedUrlPattern;
+				}
+			}
+		}
+		return mostRestrictivePattern;
 	}
 	
     function init() {
@@ -405,9 +465,9 @@ function removeClassName(ele, className) {
 		}
 		
 		if ( mindfulBrowsing.isActive() ) {
-			for (var i in blockedUrlPatterns) {
-				var blockedUrlPattern = blockedUrlPatterns[i].urlPattern;
-				if ( matchUrlPattern(blockedUrlPattern, href) && !isAllowedUrl(href) ) {
+			if ( !isAllowedUrl(href) ) {
+				var blockedUrlPattern = getMostRestrictiveBlockedUrlPattern(href);
+				if ( blockedUrlPattern ) {
 					match = true;
 					site_name = blockedUrlPattern;
 					// Check timeouts
@@ -426,9 +486,6 @@ function removeClassName(ele, className) {
 								}
 							}
 						}
-					}
-					if (match) {
-						break;
 					}
 				}
 			}
